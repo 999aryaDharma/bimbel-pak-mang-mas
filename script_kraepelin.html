@@ -1,0 +1,58 @@
+<script>
+// ============================================================
+// KRAEPELIN
+// ============================================================
+
+function renderKraepelin() {
+  const lajurInputs = Array.from({ length: 50 }, (_, i) => i + 1).map(n => `
+    <div style="text-align:center;">
+      <label style="font-size:9px; color:#94a3b8; display:block; margin-bottom:2px;">L-${n}</label>
+      <input type="number" id="lajur_k${n}" value="0"
+             style="width:100%; padding:5px; border-radius:6px; border:1px solid #e2e8f0; text-align:center; font-weight:700;">
+    </div>`).join("");
+
+  el("konten").innerHTML = `
+    <div style="font-family:'Inter',sans-serif; max-width:1100px; margin:auto; padding:20px;">
+
+      <div style="text-align:center; margin-bottom:30px;">
+        <h2 style="color:#1e293b;">Tes Kraepelin Professional</h2>
+        <div style="height:4px; width:50px; background:#3b82f6; margin:10px auto; border-radius:10px;"></div>
+      </div>
+
+      <div style="background:#fff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; display:grid; grid-template-columns:1fr 2fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+        <div>
+          <label style="font-size:10px; font-weight:700; display:block; margin-bottom:4px;">ID PESERTA</label>
+          <select id="idPeserta" onchange="updateInfoPeserta()"
+                  style="width:100%; padding:8px; border-radius:6px; border:1px solid #e2e8f0;"></select>
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; display:block; margin-bottom:4px;">NAMA LENGKAP</label>
+          <input type="text" id="nama" readonly style="width:100%; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; display:block; margin-bottom:4px;">ID TEST</label>
+          <input type="text" id="id_test_kpl" readonly style="width:100%; padding:8px; border-radius:6px; border:1px solid #e2e8f0; background:#f8fafc;">
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; display:block; margin-bottom:4px;">TANGGAL</label>
+          <input type="text" id="tgl_test_kpl" readonly style="width:100%; padding:8px; border-radius:6px; border:1px solid #e2e8f0; background:#f8fafc;">
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1px solid #e2e8f0; border-radius:15px; padding:20px;">
+        <h4 style="margin-top:0; color:#334155;">DATA PENJUMLAHAN (50 LAJUR)</h4>
+        <div style="max-height:350px; overflow-y:auto; padding-right:5px;">
+          <div style="display:grid; grid-template-columns:repeat(10,1fr); gap:8px;">${lajurInputs}</div>
+        </div>
+      </div>
+
+      <p style="text-align:center; color:#94a3b8; font-size:12px; margin-top:20px;">
+        Fitur analisa AI untuk Kraepelin dalam pengembangan.
+      </p>
+    </div>`;
+
+  loadDropdown();
+  google.script.run.withSuccessHandler(id => { el("id_test_kpl").value = id; }).generateIdTest("KPL");
+  el("tgl_test_kpl").value = todayString();
+}
+</script>

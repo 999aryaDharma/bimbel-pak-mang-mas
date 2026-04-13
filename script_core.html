@@ -1,0 +1,132 @@
+<script>
+// ============================================================
+// CORE - App Controller & Shared Utilities
+// ============================================================
+
+const el = (id) => document.getElementById(id);
+
+function loadMenu(pilihan) {
+  el("konten").innerHTML = '<div class="loading">Menyiapkan halaman...</div>';
+
+  // Gunakan if-else agar tiap fungsi di-resolve satu per satu saat dipanggil.
+  // Object map { key: fnRef } akan crash diam-diam jika salah satu fungsi belum terdefinisi.
+  try {
+    if      (pilihan === 'home')       renderHome();
+    else if (pilihan === 'peserta')    renderPeserta();
+    else if (pilihan === 'wartegg')    renderWartegg();
+    else if (pilihan === 'htp')        renderHTP();
+    else if (pilihan === 'pauli')      renderPauli();
+    else if (pilihan === 'kraepelin')  renderKraepelin();
+    else if (pilihan === 'dashboard')  renderDashboard();
+    else {
+      el("konten").innerHTML = `<p style="color:#dc3545;">Menu '<b>${pilihan}</b>' tidak ditemukan.</p>`;
+    }
+  } catch (e) {
+    // Tampilkan error di layar agar mudah di-debug, bukan silent fail.
+    el("konten").innerHTML = `
+      <div style="background:#fff1f2; border:1px solid #fecdd3; padding:20px; border-radius:10px; font-family:monospace;">
+        <b style="color:#dc3545;">Error saat membuka menu '${pilihan}':</b><br><br>
+        ${e.message}<br><br>
+        <small style="color:#64748b; white-space:pre-wrap;">${e.stack || ''}</small>
+      </div>`;
+  }
+}
+
+window.onload = () => loadMenu("home");
+
+// --- Shared Helpers ---
+
+function loadDropdown() {
+  google.script.run.withSuccessHandler(data => {
+    const selects = document.querySelectorAll("select#idPeserta");
+    const html = '<option value="">-- Pilih Peserta --</option>'
+      + data.map(p => `<option value="${p.id}" data-nama="${p.nama}">${p.id} - ${p.nama}</option>`).join("");
+    selects.forEach(s => { s.innerHTML = html; });
+  }).getPesertaDropdown();
+}
+
+function updateInfoPeserta() {
+  const sel = el("idPeserta");
+  if (!sel) return;
+  const opt = sel.options[sel.selectedIndex];
+  const namaEl = el("nama");
+  if (namaEl) namaEl.value = opt.getAttribute("data-nama") || "";
+}
+
+function todayString() {
+  return new Date().toLocaleDateString("id-ID");
+}
+
+// --- Kategori Helpers (dipakai lintas modul) ---
+
+function getKategoriWartegg(total) {
+  if (total <= 16) return "Rendah";
+  if (total <= 24) return "Cukup";
+  if (total <= 32) return "Baik";
+  return "Sangat Baik";
+}
+
+function getKategoriHTP(total) {
+  if (total >= 17) return "Sangat Baik";
+  if (total >= 13) return "Baik";
+  if (total >= 9)  return "Cukup";
+  return "Rendah";
+}
+
+// ============================================================
+// DB_WARTEGG - Narasi per kotak (client-side, update real-time)
+// ============================================================
+
+const DB_WARTEGG = {
+  1: {
+    identitas:    "Sangat kurang percaya diri, menarik diri dari lingkungan, dan mengalami krisis identitas.",
+    sosial:       "Sangat tertutup, kaku dalam bergaul, dan memiliki kesulitan besar untuk beradaptasi.",
+    ambisi:       "Kurang memiliki arah tujuan hidup, mudah menyerah, dan memiliki daya juang yang sangat rendah.",
+    beban:        "Sangat mudah merasa tertekan oleh masalah kecil dan cenderung menghindari tanggung jawab.",
+    vitalitas:    "Energi psikis sangat rendah, kurang bergairah dalam bertindak, dan cenderung pasif.",
+    rasional:     "Pola pikir tidak terorganisir, sulit menghubungkan fakta, dan sangat subjektif.",
+    sensitivitas: "Sangat dingin (apatis) atau terlalu emosional sehingga tidak mampu mengelola perasaan.",
+    kontrol:      "Tidak memiliki prinsip yang kuat, sangat mudah dipengaruhi, dan sulit mengendalikan impuls."
+  },
+  2: {
+    identitas:    "Mulai menunjukkan kesadaran diri, namun masih sering ragu dan bergantung pada penilaian orang lain.",
+    sosial:       "Mampu merespons interaksi jika dipicu orang lain, namun cenderung pasif dan sulit memulai.",
+    ambisi:       "Memiliki keinginan maju, tetapi seringkali kehilangan fokus oleh hambatan teknis sederhana.",
+    beban:        "Cenderung merasa terbebani oleh tugas baru dan membutuhkan bimbingan intensif.",
+    vitalitas:    "Energi fluktuatif; kadang bersemangat namun mudah drop jika lingkungan tidak mendukung.",
+    rasional:     "Mencoba berpikir logis, namun sering terjebak pada detail kecil sehingga sulit melihat gambaran utuh.",
+    sensitivitas: "Menunjukkan rasa empati, namun kesulitan mengekspresikannya sehingga terkadang terkesan kaku.",
+    kontrol:      "Berusaha mengikuti aturan, namun masih inkonsisten dalam kedisiplinan jika tidak diawasi."
+  },
+  3: {
+    identitas:    "Memiliki kesadaran diri yang cukup, namun terkadang masih ragu dalam keputusan besar.",
+    sosial:       "Mampu bersosialisasi dengan baik pada lingkungan dikenal, butuh waktu di tempat baru.",
+    ambisi:       "Memiliki keinginan maju yang stabil, namun belum menunjukkan upaya terobosan.",
+    beban:        "Mampu menghadapi beban kerja harian, namun produktivitas menurun jika tekanan bertubi-tubi.",
+    vitalitas:    "Memiliki energi yang cukup untuk aktivitas rutin dan dorongan bertindak yang terkendali.",
+    rasional:     "Mampu berpikir logis, namun terkadang kurang mendalam dalam analisis masalah.",
+    sensitivitas: "Memiliki empati yang wajar, mampu menjaga perasaan orang lain.",
+    kontrol:      "Memiliki kontrol diri yang baik dan kepatuhan terhadap norma yang cukup stabil."
+  },
+  4: {
+    identitas:    "Memiliki kepercayaan diri yang stabil, mandiri, dan mampu menyelesaikan tugas personal dengan baik.",
+    sosial:       "Proaktif dalam lingkungan sosial, mampu bekerja sama dalam tim secara efektif.",
+    ambisi:       "Menunjukkan persistensi yang kuat dalam mencapai target dan berinisiatif untuk perbaikan.",
+    beban:        "Memiliki daya tahan yang baik terhadap tekanan dan tetap tenang saat deadline.",
+    vitalitas:    "Menunjukkan antusiasme yang konsisten dan berani mengambil keputusan secara asertif.",
+    rasional:     "Mampu melakukan analisis sistematis dan memberikan solusi praktis.",
+    sensitivitas: "Memiliki kematangan emosional yang baik, peka terhadap rekan kerja.",
+    kontrol:      "Memiliki prinsip diri yang kuat dan disiplin yang tinggi dalam prosedur organisasi."
+  },
+  5: {
+    identitas:    "Sangat percaya diri, memiliki integritas yang kuat, mandiri, dan mampu menempatkan diri secara tepat.",
+    sosial:       "Sangat supel, memiliki keterampilan interpersonal tinggi, dan mampu menjadi penggerak kelompok.",
+    ambisi:       "Memiliki ambisi besar yang terukur, daya juang tinggi, dan sangat fokus pada pencapaian jangka panjang.",
+    beban:        "Sangat tangguh (resilient), mampu mengubah tantangan menjadi peluang, dan tenang saat krisis.",
+    vitalitas:    "Vitalitas dan antusiasme luar biasa, berani mengambil risiko terukur, dan sangat asertif.",
+    rasional:     "Daya analisis sangat tajam, mampu melihat big picture, dan sangat objektif dalam pengambilan keputusan.",
+    sensitivitas: "Kematangan emosional luar biasa, peka terhadap kode sosial, dan bijak dalam mengelola emosi.",
+    kontrol:      "Kedisiplinan diri sangat tinggi, berpegang teguh pada prinsip, namun tetap fleksibel secara fungsional."
+  }
+};
+</script>

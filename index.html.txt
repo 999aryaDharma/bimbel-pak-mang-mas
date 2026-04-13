@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <!-- Tambahkan script SweetAlert2 ini -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <?!= include('style'); ?>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>🧠 APLIKASI PENILAIAN BIMBINGAN BELAJAR BERSAMA PSIKOTES</h1>
+      <p>Sistem Penilaian Modern | Dashboard Terintegrasi</p>
+    </header>
+
+    <nav class="menu">
+     <nav class="menu">
+  <button onclick="loadMenu('home')">🏠 Home</button>
+  <button onclick="loadMenu('peserta')">👤 Peserta</button>
+  <button onclick="loadMenu('wartegg')">🧩 Wartegg</button>
+  <button onclick="loadMenu('htp')">🖼️ Tes HTP</button> 
+  <button onclick="loadMenu('pauli')">📝 Tes Pauli</button>
+  <button onclick="loadMenu('kraepelin')">📊 Tes Kraepelin</button>
+  <button onclick="loadMenu('dashboard')">📈 Dashboard</button>
+</nav>
+    </nav>
+
+    <main id="konten" class="card">
+      <div class="loading">Memuat aplikasi...</div>
+    </main>
+
+    <footer class="footer">
+      <p>© 2026 Sistem Psikotes | Creator: Komang Mas</p>
+    </footer>
+  </div>
+  <?!= include('script'); ?>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<script>
+// ============================================================
+// PESERTA
+// ============================================================
+
+function renderPeserta() {
+  el("konten").innerHTML = '<div class="loading">Memuat data...</div>';
+
+  google.script.run.withSuccessHandler(res => {
+    if (!res || !res.success) {
+      el("konten").innerHTML = `<p style="color:red;">Gagal memuat data: ${res ? res.message : "Unknown error"}</p>`;
+      return;
+    }
+
+    const headers = ["NO.", "ID PESERTA", "NAMA LENGKAP", "JENIS KELAMIN",
+                     "TANGGAL LAHIR", "ASAL SEKOLAH", "ALAMAT", "NO. HP",
+                     "TANGGAL DAFTAR", "AKSI"];
+    const thStyle = `style="border:1px solid #333; padding:10px;"`;
+
+    el("konten").innerHTML = `
+      <div style="background:white; padding:20px; border-radius:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h2 style="margin:0;">Data Seluruh Peserta (${res.total})</h2>
+          <button onclick="window.print()"
+                  style="padding:10px 20px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
+            Cetak Seluruh Laporan
+          </button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:11px;">
+            <thead>
+              <tr style="background:#343a40; color:white;">
+                ${headers.map(h => `<th ${thStyle}>${h}</th>`).join("")}
+              </tr>
+            </thead>
+            <tbody>
+              ${res.rows.map((r, i) => `
+                <tr style="background:${i % 2 === 0 ? "#fff" : "#f4f4f4"};">
+                  <td style="border:1px solid #444; padding:8px; text-align:center;">${i + 1}</td>
+                  <td style="border:1px solid #444; padding:8px; font-weight:bold; color:#0056b3;">${r.id}</td>
+                  ${[1, 2, 3, 4, 5, 6, 7].map(ci =>
+                    `<td style="border:1px solid #444; padding:8px;">${r.data[ci] || "-"}</td>`
+                  ).join("")}
+                  <td style="border:1px solid #444; padding:8px; text-align:center;">
+                    <button onclick="hapusPeserta('${r.id}')"
+                            style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                      Hapus
+                    </button>
+                  </td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }).getSemuaPeserta();
+}
+
+function hapusPeserta(id) {
+  if (!confirm(`Hapus permanen data peserta ID: ${id}?\nData tidak bisa dikembalikan.`)) return;
+
+  google.script.run.withSuccessHandler(res => {
+    if (res.success) { alert(res.message); renderPeserta(); }
+    else alert("Gagal: " + res.message);
+  }).hapusDataPesertaSheet(id);
+}
+</script>
