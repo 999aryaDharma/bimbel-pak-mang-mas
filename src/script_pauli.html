@@ -83,11 +83,24 @@ function renderPauli() {
 
         <div style="margin-bottom:35px; border:2px dashed #3b82f6; border-radius:20px; padding:30px; text-align:center; background:#eff6ff;">
           <h4 style="font-size:16px; font-weight:800; color:#1e40af; margin-bottom:15px;">AI VISION SCANNER (OCR ENGINE)</h4>
-          <input type="file" id="file_pauli" accept="image/*" onchange="previewImagePauli(this)" style="margin-bottom:15px; font-size:13px;">
-          <div id="preview_container_pauli" style="margin-top:10px; display:none;">
-            <img id="img_preview_pauli" src="#" style="max-width:100%; max-height:300px; border-radius:12px; border:2px solid #fff;">
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+            <div>
+              <label style="font-size:13px; font-weight:700; color:#1e40af; display:block; margin-bottom:8px;">Gambar 1</label>
+              <input type="file" id="file_pauli_1" accept="image/*" onchange="previewImagePauli(this, 1)" style="font-size:13px;">
+              <div id="preview_container_pauli_1" style="margin-top:10px; display:none;">
+                <img id="img_preview_pauli_1" src="#" style="max-width:100%; max-height:500px; border-radius:12px; border:2px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:13px; font-weight:700; color:#1e40af; display:block; margin-bottom:8px;">Gambar 2</label>
+              <input type="file" id="file_pauli_2" accept="image/*" onchange="previewImagePauli(this, 2)" style="font-size:13px;">
+              <div id="preview_container_pauli_2" style="margin-top:10px; display:none;">
+                <img id="img_preview_pauli_2" src="#" style="max-width:100%; max-height:500px; border-radius:12px; border:2px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+              </div>
+            </div>
           </div>
-          <br>
+          
           <button onclick="jalankanAI_Pauli()"
                   style="background:#3b82f6; color:white; border:none; padding:15px 40px; border-radius:12px; font-weight:800; cursor:pointer; margin-top:10px;">
             Ekstrak Data Lajur via AI
@@ -159,12 +172,12 @@ function renderPauli() {
   el("tgl_test").value = todayString();
 }
 
-function previewImagePauli(input) {
-  const container = el("preview_container_pauli");
+function previewImagePauli(input, num) {
+  const container = el("preview_container_pauli_" + num);
   if (input.files && input.files[0]) {
     const reader = new FileReader();
     reader.onload = e => {
-      el("img_preview_pauli").src = e.target.result;
+      el("img_preview_pauli_" + num).src = e.target.result;
       container.style.display = "block";
     };
     reader.readAsDataURL(input.files[0]);
@@ -174,15 +187,13 @@ function previewImagePauli(input) {
 }
 
 function jalankanAI_Pauli() {
-  const file = el("file_pauli").files[0];
-  if (!file) { Swal.fire("Perhatian", "Pilih gambar hasil tes dulu", "warning"); return; }
+  const file1 = el("file_pauli_1").files[0];
+  const file2 = el("file_pauli_2").files[0];
+  if (!file1 && !file2) { Swal.fire("Perhatian", "Pilih gambar hasil tes dulu", "warning"); return; }
 
   Swal.fire({ title: "AI Memindai Lembar Kerja", text: "Menganalisa...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-  const reader = new FileReader();
-  reader.onload = e => {
-    const base64 = e.target.result.split(",")[1];
-
+  const processFiles = (base64_1, base64_2) => {
     google.script.run
       .withFailureHandler(err => { Swal.close(); Swal.fire("Error Koneksi", err.message, "error"); })
       .withSuccessHandler(res => {
@@ -214,36 +225,176 @@ function jalankanAI_Pauli() {
         hitungOtomatisPauli();
         Swal.fire("Selesai", "Data telah dimuat. Periksa Log Pengamatan.", "success");
       })
-      .pauliJembatanAI(base64);
+      .pauliJembatanAI(base64_1, base64_2);
   };
-  reader.readAsDataURL(file);
+
+  if (file1 && file2) {
+    const reader1 = new FileReader();
+    const reader2 = new FileReader();
+    let base64_1 = null, base64_2 = null;
+    
+    reader1.onload = e1 => {
+      base64_1 = e1.target.result.split(",")[1];
+      if (base64_2) processFiles(base64_1, base64_2);
+    };
+    reader2.onload = e2 => {
+      base64_2 = e2.target.result.split(",")[1];
+      if (base64_1) processFiles(base64_1, base64_2);
+    };
+    reader1.readAsDataURL(file1);
+    reader2.readAsDataURL(file2);
+  } else if (file1) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(",")[1];
+      processFiles(base64, null);
+    };
+    reader.readAsDataURL(file1);
+  } else if (file2) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(",")[1];
+      processFiles(null, base64);
+    };
+    reader.readAsDataURL(file2);
+  }
 }
 
 function hitungOtomatisPauli() {
   const vals = Array.from({ length: 20 }, (_, i) => parseInt(el("lajur_" + (i + 1)).value) || 0);
 
-  const n          = vals.reduce((a, b) => a + b, 0);
+  // === PARAMETER DASAR ===
+  const n          = vals.reduce((a, b) => a + b, 0);  // Total Dikerjakan
   const s          = parseInt(el("total_salah").value) || 0;
-  const finalScore = n - s;
-  const persen     = n > 0 ? ((s / n) * 100).toFixed(2) : 0;
+  const l          = parseInt(el("total_loncat").value) || 0;
+  const p          = parseInt(el("total_betul").value) || 0;
+  
+  // === STATISTIK ===
   const puncak     = Math.max(...vals);
   const positif    = vals.filter(v => v > 0);
   const terendah   = positif.length > 0 ? Math.min(...positif) : 0;
-
+  const rentang    = puncak - terendah;
+  const persenSalah = n > 0 ? ((s / n) * 100) : 0;
+  
+  // === SIMPANGAN (AVEDEV) ===
+  const mean = n > 0 ? (n / 20) : 0;
+  const simpangan = vals.reduce((sum, v) => sum + Math.abs(v - mean), 0) / 20;
+  
+  // === SKOR KOMPONEN (0-100) ===
+  const skorKuantitas   = (n / 3000) * 100;
+  const skorKetelitian  = 100 - (persenSalah * 10);
+  const skorStabilitas  = 100 - (simpangan * 5);
+  
+  // === FINAL SCORE (Weighted) ===
+  const finalScore = (skorKuantitas * 0.40) + (skorKetelitian * 0.35) + (skorStabilitas * 0.25);
+  
+  // === UPDATE UI ===
   el("total_n").value            = n;
   el("score_total").value        = n;
   el("final_score_angka").value  = finalScore.toFixed(2);
-  el("score_salah_persen").value = persen + "%";
-  el("score_pembetulan").value   = el("total_betul").value || 0;
+  el("score_salah_persen").value = persenSalah.toFixed(2) + "%";
+  el("score_pembetulan").value   = p;
   el("score_puncak").value       = puncak;
   el("score_terendah").value     = terendah;
-  el("score_simpangan").value    = puncak - terendah;
+  el("score_simpangan").value    = simpangan.toFixed(2);
 
-  const kategori = finalScore > 300 ? "SANGAT BAIK" : finalScore > 200 ? "BAIK" : "CUKUP";
+  // === KATEGORI & REKOMENDASI ===
+  let kategori, rekomendasi;
+  if (finalScore > 2400) {
+    kategori = "ISTIMEWA";
+    rekomendasi = "MS UNTUK SELEKSI";
+  } else if (finalScore >= 2000) {
+    kategori = "BAIK";
+    rekomendasi = "MS UNTUK SELEKSI";
+  } else if (finalScore >= 1600) {
+    kategori = "CUKUP";
+    rekomendasi = "DIPERTIMBANGKAN";
+  } else {
+    kategori = "KURANG";
+    rekomendasi = "TMS";
+  }
+  
   el("hasil_kategori_final").innerText    = kategori;
-  el("hasil_rekomendasi_final").innerText = finalScore > 250 ? "DEVELOPMENT" : "ADMINISTRATION";
+  el("hasil_rekomendasi_final").innerText = rekomendasi;
+
+  // === GENERATE NARASI OTOMATIS ===
+  generateNarasiPauli(kategori, persenSalah, simpangan, vals);
 
   renderPauliMiniChart(vals);
+}
+
+function generateNarasiPauli(kategori, persenSalah, simpangan, vals) {
+  // === NARASI KAPASITAS KERJA ===
+  let narasiKapasitas = "";
+  if (kategori === "ISTIMEWA") {
+    narasiKapasitas = "Memiliki kapasitas energi psikis yang sangat besar. Mampu bekerja di bawah tekanan ekstrem dengan produktivitas yang jauh di atas rata-rata. Sangat tangguh secara mental.";
+  } else if (kategori === "BAIK") {
+    narasiKapasitas = "Daya tahan kerja solid. Mampu mempertahankan ritme kerja yang tinggi secara konsisten. Memiliki stamina yang sangat baik untuk tugas operasional.";
+  } else if (kategori === "CUKUP") {
+    narasiKapasitas = "Kapasitas kerja berada pada level rata-rata. Mampu menyelesaikan tugas rutin dengan baik, namun stamina mungkin menurun jika beban kerja ditambah secara mendadak.";
+  } else {
+    narasiKapasitas = "Energi psikis terbatas. Cepat merasa jenuh dan lelah secara mental. Berpotensi mengalami penurunan performa signifikan pada tugas berdurasi lama.";
+  }
+  el("narasi_kapasitas").value = narasiKapasitas;
+
+  // === NARASI KETELITIAN & KONSENTRASI ===
+  let narasiKetelitian = "";
+  if (kategori === "ISTIMEWA") {
+    narasiKetelitian = "Memiliki ketajaman sensorik dan konsentrasi yang luar biasa. Sangat minim risiko dalam melakukan kesalahan prosedural atau teknis di lapangan.";
+  } else if (kategori === "BAIK") {
+    narasiKetelitian = "Cermat dalam bekerja. Mampu menjaga kualitas hasil kerja meskipun dalam kondisi fisik yang mulai lelah. Kesalahan yang muncul sangat terkendali.";
+  } else if (kategori === "CUKUP") {
+    narasiKetelitian = "Konsentrasi cukup stabil, namun sesekali muncul kecerobohan kecil. Masih memenuhi standar minimal untuk tugas-tugas administratif maupun lapangan.";
+  } else {
+    narasiKetelitian = "Kurang cermat dan mudah terdistraksi. Risiko tinggi terjadi kesalahan fatal (human error) karena lemahnya daya konsentrasi terhadap detail.";
+  }
+  el("narasi_ketelitian").value = narasiKetelitian;
+
+  // === NARASI STABILITAS & PENGENDALIAN EMOSI ===
+  let narasiStabilitas = "";
+  if (kategori === "ISTIMEWA") {
+    narasiStabilitas = "Menunjukkan pengendalian diri yang matang. Tidak mudah goyah oleh tekanan lingkungan. Memiliki ketenangan luar biasa dalam mengambil keputusan.";
+  } else if (kategori === "BAIK") {
+    narasiStabilitas = "Memiliki stabilitas emosi yang baik. Ritme kerja konsisten, mencerminkan pribadi yang terukur dan tidak emosional dalam bekerja.";
+  } else if (kategori === "CUKUP") {
+    narasiStabilitas = "Emosi cenderung berubah-ubah namun masih dalam batas normal. Kadang dipengaruhi oleh mood atau faktor eksternal, tapi mampu kembali fokus.";
+  } else {
+    narasiStabilitas = "Kontrol emosi lemah. Performa kerja sangat bergantung pada perasaan hati. Mudah panik atau kehilangan kendali saat menghadapi hambatan.";
+  }
+  el("narasi_stabilitas").value = narasiStabilitas;
+
+  // === NARASI GRAFIK & KURVA BELAJAR ===
+  let narasiKurva = "";
+  if (kategori === "ISTIMEWA") {
+    narasiKurva = "Memiliki mentalitas pembelajar dan daya juang (fighting spirit) yang tinggi. Semakin berat tantangan, motivasi subjek justru semakin meningkat.";
+  } else if (kategori === "BAIK") {
+    narasiKurva = "Memiliki mentalitas \"maraton\" yang kuat. Mampu beradaptasi dengan cepat sejak awal dan mempertahankan standar tinggi hingga tugas selesai.";
+  } else if (kategori === "CUKUP") {
+    narasiKurva = "Membutuhkan waktu untuk penyesuaian (warming up), namun menunjukkan usaha yang cukup untuk meningkatkan performa seiring berjalannya waktu.";
+  } else {
+    narasiKurva = "Daya tahan mental lemah. Mudah menyerah (giving up) sebelum tugas selesai. Menunjukkan indikasi kelelahan psikis yang prematur.";
+  }
+  el("narasi_kurva").value = narasiKurva;
+
+  // === NARASI ANALISA KESELURUHAN ===
+  let narasiGlobal = "";
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const trenNaik = vals[vals.length - 1] > vals[0];
+  
+  if (kategori === "ISTIMEWA" && persenSalah < 2 && trenNaik) {
+    narasiGlobal = "Berdasarkan hasil uji psikometri, subjek menunjukkan profil kompetensi yang sangat solid dengan Kapasitas Kerja yang berada di level istimewa. Hal ini mencerminkan energi psikis yang besar untuk menyelesaikan tugas-tugas berat dalam durasi panjang. Kekuatan utama subjek terletak pada kemampuannya menjaga Ketelitian dan Konsentrasi tetap tajam meskipun berada di bawah tekanan waktu (time pressure).\n\nSecara emosional, subjek tergolong Sangat Stabil, mampu mengendalikan diri dengan baik sehingga ritme kerjanya konsisten dari awal hingga akhir. Kurva Belajar yang progresif menunjukkan bahwa subjek memiliki daya juang tinggi dan tidak mudah menyerah pada situasi yang monoton. Secara keseluruhan, subjek sangat potensial untuk ditempatkan pada posisi yang membutuhkan stamina mental dan akurasi tinggi.";
+  } else if (kategori === "BAIK" && persenSalah < 2.5) {
+    narasiGlobal = "Secara keseluruhan, hasil pemeriksaan psikologi melalui Tes Pauli menunjukkan bahwa subjek memiliki kualifikasi yang meyakinkan untuk memenuhi standar prajurit. Kekuatan utama subjek terletak pada konsistensi performa; subjek tidak hanya mampu bekerja dengan cepat (kuantitas), tetapi juga mampu menjaga akurasi yang tinggi (kualitas) secara bersamaan.\n\nProfil grafiknya mencerminkan stabilitas emosi yang baik, yang berarti subjek dapat diandalkan dalam tugas-tugas yang membutuhkan ketenangan dan stamina mental jangka panjang. Subjek menunjukkan sikap kerja yang penuh tanggung jawab dan memiliki daya tahan stres (stress tolerance) yang baik, sehingga sangat potensial untuk dikembangkan dalam penugasan lapangan maupun administratif strategis.";
+  } else if (kategori === "CUKUP" && persenSalah >= 3 && persenSalah <= 4) {
+    narasiGlobal = "Subjek memiliki Kapasitas Kerja yang memadai dan berada pada level rata-rata normal untuk menjalankan tugas-tugas keprajuritan standar. Dalam aspek Ketelitian, subjek mampu bekerja dengan cukup baik, meskipun terdapat beberapa kesalahan kecil yang muncul akibat kelelahan di pertengahan tes.\n\nStabilitas Emosi subjek menunjukkan fluktuasi yang moderat, mengindikasikan bahwa performa kerjanya masih sedikit dipengaruhi oleh faktor konsentrasi yang naik-turun. Namun, Kurva Belajar yang stabil menunjukkan subjek adalah pribadi yang adaptif dan mampu mempertahankan standar kerja hingga tugas selesai. Subjek direkomendasikan untuk posisi operasional dengan pengawasan standar dan ritme kerja yang terukur.";
+  } else if (kategori === "KURANG" || persenSalah > 5) {
+    narasiGlobal = "Hasil analisa menunjukkan Kapasitas Kerja subjek masih terbatas, di mana energi psikis cenderung cepat terkuras sebelum tugas selesai. Aspek Ketelitian dan Konsentrasi perlu menjadi perhatian serius karena ditemukan tingkat kesalahan yang cukup tinggi, mengindikasikan subjek mudah terdistraksi dan kurang fokus pada detail.\n\nGrafik yang cenderung menurun (Regresif) mencerminkan daya tahan stres (stress tolerance) yang rendah dan kecenderungan untuk menyerah saat menghadapi beban kerja yang berulang. Secara psikologis, subjek memerlukan pengembangan lebih lanjut dalam hal regulasi emosi dan peningkatan fokus agar dapat memenuhi kualifikasi standar operasional lapangan.";
+  } else {
+    // Fallback narrative based on category
+    narasiGlobal = `Subjek menunjukkan performa ${kategori.toLowerCase()} dalam Tes Pauli. Kapasitas kerja ${kategori === "CUKUP" ? "cukup memadai" : "perlu dikembangkan"} dengan tingkat ketelitian ${persenSalah > 3 ? "yang perlu ditingkatkan" : "yang baik"}. Stabilitas emosi menunjukkan ${simpangan > 10 ? "fluktuasi yang cukup signifikan" : "konsistensi yang baik"}. Perlu ${kategori === "KURANG" ? "pendampingan intensif" : "pengembangan lebih lanjut"} untuk mencapai standar optimal.`;
+  }
+  
+  el("analisa_keseluruhan").value = narasiGlobal;
 }
 
 function renderPauliMiniChart(data) {

@@ -384,108 +384,97 @@
   // --- Simpan ---
 
   async function simpanHTP() {
-    if (!el("idPeserta") || !el("idPeserta").value) {
-      alert("Pilih peserta terlebih dahulu!");
-      return;
-    }
-
-    Swal.fire({
-      title: "Menyiapkan Data & Membaca Gambar...",
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
-    });
-
-    // Fungsi helper untuk mengambil file menjadi base64 sebelum dikirim
-    const getBase64 = async (id) => {
-      const fileInput = el(id);
-      if (fileInput && fileInput.files && fileInput.files.length > 0) {
-        return await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(fileInput.files[0]);
-          reader.onload = () =>
-            resolve(reader.result.replace(/^data:image\/[a-z]+;base64,/, ""));
-          reader.onerror = () => resolve("");
-        });
-      }
-      return "";
-    };
-
-    const payload = {
-      id_test: el("id_test_htp").value,
-      id_peserta: el("idPeserta").value,
-      nama: el("nama").value,
-      tanggal: el("tgl_test").value,
-      total_keseluruhan: el("total_keseluruhan").value,
-      kategori_keseluruhan: el("kategori_keseluruhan").value,
-      final_teknis: el("final_teknis").value,
-      final_interpretasi: el("final_interpretasi").value,
-      final_dinamika: el("final_dinamika").value,
-      final_profil: el("final_profil").value,
-
-      // Tangkap ke-4 gambar
-      image_orang: await getBase64("file_orang"),
-      image_rumah: await getBase64("file_rumah"),
-      image_pohon: await getBase64("file_pohon"),
-      image_gabung: await getBase64("file_gabung"),
-    };
-
-    HTP_TAHAP_LIST.forEach((tahap) => {
-      HTP_ASPEK_LIST.forEach((aspek) => {
-        payload[`skor_${tahap.id}_${aspek.id}`] =
-          (el(`skor_${tahap.id}_${aspek.id}`) || {}).value || 0;
-      });
-      payload[`total_${tahap.id}`] =
-        (el(`total_score_${tahap.id}`) || {}).value || 0;
-      payload[`kategori_${tahap.id}`] =
-        (el(`kategori_${tahap.id}`) || {}).value || "-";
-      payload[`teknis_${tahap.id}`] =
-        (el(`teknis_${tahap.id}`) || {}).value || "";
-      payload[`konten_${tahap.id}`] =
-        (el(`konten_${tahap.id}`) || {}).value || "";
-      payload[`simbolis_${tahap.id}`] =
-        (el(`simbolis_${tahap.id}`) || {}).value || "";
-      payload[`observasi_${tahap.id}`] =
-        (el(`observasi_${tahap.id}`) || {}).value || "";
-    });
-
-    Swal.fire({
-      title: "Membuat PDF & Menyimpan Database...",
-      text: "Mohon tunggu beberapa detik.",
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
-    });
-
-    google.script.run
-      .withSuccessHandler((res) => {
-        Swal.close();
-        if (res.success) {
-          Swal.fire("Berhasil", res.message, "success").then(() => {
-            // Buat iframe Preview jika sukses dan PDF ada
-            if (res.pdfUrl) {
-              let previewDiv = el("pdfPreviewHTP");
-              if (!previewDiv) {
-                previewDiv = document.createElement("div");
-                previewDiv.id = "pdfPreviewHTP";
-                previewDiv.style.marginTop = "30px";
-                previewDiv.innerHTML = `<iframe id="frameLaporanHTP" style="width:100%; height:600px; border:1px solid #e2e8f0; border-radius:12px;"></iframe>`;
-                // Tancapkan di dalam parent-nya
-                el("konten").appendChild(previewDiv);
-              }
-              previewDiv.style.display = "block";
-              el("frameLaporanHTP").src = res.pdfUrl.replace(
-                "/view?usp=drivesdk",
-                "/preview",
-              );
-            }
-          });
-        } else {
-          Swal.fire("Gagal", res.message, "error");
-        }
-      })
-      .withFailureHandler((err) => {
-        Swal.close();
-        Swal.fire("Error Server", err.message, "error");
-      })
-      .simpanHTP(payload);
+  if (!document.getElementById("idPeserta") || !document.getElementById("idPeserta").value) {
+    alert("Pilih peserta terlebih dahulu!");
+    return;
   }
+
+  Swal.fire({ title: "Menyiapkan Data & Membaca Gambar...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+  // Fungsi helper untuk mengambil gambar dari HTML input menjadi base64 (Teks)
+  const getBase64 = async (id) => {
+    const fileInput = document.getElementById(id);
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(fileInput.files[0]);
+        reader.onload = () => resolve(reader.result.replace(/^data:image\/[a-z]+;base64,/, ""));
+        reader.onerror = () => resolve("");
+      });
+    }
+    return "";
+  };
+
+  const payload = {
+    id_test: document.getElementById("id_test_htp").value, 
+    id_peserta: document.getElementById("idPeserta").value,
+    nama: document.getElementById("nama").value, 
+    tanggal: document.getElementById("tgl_test").value,
+    total_keseluruhan:    document.getElementById("total_keseluruhan").value,
+    kategori_keseluruhan: document.getElementById("kategori_keseluruhan").value,
+    final_teknis:         document.getElementById("final_teknis").value,
+    final_interpretasi:   document.getElementById("final_interpretasi").value,
+    final_dinamika:       document.getElementById("final_dinamika").value,
+    final_profil:         document.getElementById("final_profil").value,
+    
+    // TANGKAP GAMBAR
+    image_orang:  await getBase64("file_orang"),
+    image_rumah:  await getBase64("file_rumah"),
+    image_pohon:  await getBase64("file_pohon"),
+    image_gabung: await getBase64("file_gabung")
+  };
+
+  const tahapanList = ["orang", "rumah", "pohon", "gabung"];
+  const aspekList = ["pro", "detl", "pers", "line"];
+
+  // TANGKAP SKOR DAN NARASI PER KOTAK SECARA OTOMATIS
+  tahapanList.forEach(tahap => {
+    aspekList.forEach(aspek => {
+      const elSkor = document.getElementById(`skor_${tahap}_${aspek}`);
+      const elNarasi = document.getElementById(`narasi_detail_${tahap}_${aspek}`);
+      payload[`skor_${tahap}_${aspek}`] = elSkor ? elSkor.value : 0;
+      // INI YANG MEMBUAT KOLOM NARASI (np, nh, nt) TERISI
+      payload[`narasi_detail_${tahap}_${aspek}`] = elNarasi ? elNarasi.value : ""; 
+    });
+    
+    payload[`total_${tahap}`]     = (document.getElementById(`total_score_${tahap}`) || {}).value || 0;
+    payload[`kategori_${tahap}`]  = (document.getElementById(`kategori_${tahap}`) || {}).value || "-";
+    payload[`teknis_${tahap}`]    = (document.getElementById(`teknis_${tahap}`) || {}).value || "";
+    payload[`konten_${tahap}`]    = (document.getElementById(`konten_${tahap}`) || {}).value || "";
+    payload[`simbolis_${tahap}`]  = (document.getElementById(`simbolis_${tahap}`) || {}).value || "";
+    payload[`observasi_${tahap}`] = (document.getElementById(`observasi_${tahap}`) || {}).value || "";
+  });
+
+  Swal.fire({ 
+    title: "Menyimpan ke Google Sheet & Membuat PDF...", 
+    text: "Proses ini membutuhkan waktu beberapa detik karena mengunggah gambar. Mohon tunggu.", 
+    allowOutsideClick: false, 
+    didOpen: () => Swal.showLoading() 
+  });
+
+  google.script.run
+    .withSuccessHandler(res => {
+      Swal.close();
+      if(res.success) {
+        Swal.fire("Berhasil", res.message, "success").then(() => {
+          if (res.pdfUrl) {
+            let previewDiv = document.getElementById("pdfPreviewHTP");
+            if (!previewDiv) {
+              previewDiv = document.createElement("div");
+              previewDiv.id = "pdfPreviewHTP";
+              previewDiv.style.marginTop = "30px";
+              previewDiv.innerHTML = `<iframe id="frameLaporanHTP" style="width:100%; height:600px; border:1px solid #e2e8f0; border-radius:12px;"></iframe>`;
+              document.getElementById("konten").appendChild(previewDiv);
+            }
+            previewDiv.style.display = "block";
+            document.getElementById("frameLaporanHTP").src = res.pdfUrl.replace("/view?usp=drivesdk", "/preview");
+          }
+        });
+      } else {
+        Swal.fire("Gagal Menyimpan", res.message, "error");
+      }
+    })
+    .withFailureHandler(err => { Swal.close(); Swal.fire("Error Koneksi", err.message, "error"); })
+    .simpanHTP(payload);
+}
 </script>

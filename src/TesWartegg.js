@@ -53,42 +53,43 @@ function simpanWartegg(data) {
       );
     }
 
-    sheet.appendRow([
-      new Date(),
-      data.id_test || "",
-      data.id_peserta || "",
-      data.nama || "",
-      data.tanggal || "",
-      Number(data.g1 || 0),
-      Number(data.g2 || 0),
-      Number(data.g3 || 0),
-      Number(data.g4 || 0),
-      Number(data.g5 || 0),
-      Number(data.g6 || 0),
-      Number(data.g7 || 0),
-      Number(data.g8 || 0),
-      Number(data.total || 0),
-      data.kategori || "",
-      data.aspek || "",
-      data.interpretasi || "",
-      data.deskripsi || "",
-      data.rekomendasi || "",
-      data.narasi_g1 || "",
-      data.narasi_g2 || "",
-      data.narasi_g3 || "",
-      data.narasi_g4 || "",
-      data.narasi_g5 || "",
-      data.narasi_g6 || "",
-      data.narasi_g7 || "",
-      data.narasi_g8 || "",
-      imageUrl,
-    ]);
+    const row = [
+      data.id_test || "",      // ID_TEST
+      data.id_peserta || "",   // WTGID_PESERTA
+      data.nama || "",         // NAMA
+      data.tanggal || "",      // TGL_TESTN
+      Number(data.g1 || 0),    // GAMBAR1
+      Number(data.g2 || 0),    // GAMBAR2
+      Number(data.g3 || 0),    // GAMBAR3
+      Number(data.g4 || 0),    // GAMBAR4
+      Number(data.g5 || 0),    // GAMBAR5
+      Number(data.g6 || 0),    // GAMBAR6
+      Number(data.g7 || 0),    // GAMBAR7
+      Number(data.g8 || 0),    // GAMBAR8
+      Number(data.total || 0), // NILAI_SCORE
+      data.kategori || "",     // KATEGORI
+      data.aspek || "",        // ASPEK_TEKNIS
+      data.interpretasi || "", // INTERPRETASI
+      data.deskripsi || "",    // DESKRIPSI
+      data.rekomendasi || "",  // REKOMENDASI
+      imageUrl,                // DATA_GAMBAR (Link Drive)
+      "-",                     // DATA_GRAFIK (Placeholder)
+      data.narasi_g1 || "",    // ADAPTASI
+      data.narasi_g2 || "",    // KREATIVITAS
+      data.narasi_g3 || "",    // AMBISI
+      data.narasi_g4 || "",    // KECEMASAN
+      data.narasi_g5 || "",    // ENERGI
+      data.narasi_g6 || "",    // INTELEKTUAL
+      data.narasi_g7 || "",    // SENSIBILITAS
+      data.narasi_g8 || ""     // SOSIAL
+    ];
 
+    sheet.appendRow(row);
     const pdfUrl = _generatePdfWartegg(data, imageUrl);
 
     return createSuccessResponse({
       message: "Data Wartegg berhasil disimpan.",
-      pdfUrl: pdfUrl,
+      pdfUrl: pdfUrl
     });
   } catch (e) {
     return createErrorResponse(e.message);
@@ -115,34 +116,27 @@ function _generatePdfWartegg(data, imageUrl) {
     const doc = DocumentApp.openById(copy.getId());
     const body = doc.getBody();
 
+    // HARUS SAMA PERSIS BESAR KECIL HURUFNYA DENGAN TEMPLATE DOCX
     const replacements = {
-      "{{ID_Test}}": data.id_test || "-",
-      "{{ID_Peserta}}": data.id_peserta || "-",
-      "{{Nama}}": data.nama || "-",
-      "{{Tanggal}}": data.tanggal || "-",
-      "{{G1}}": String(data.g1 || 0),
-      "{{G2}}": String(data.g2 || 0),
-      "{{G3}}": String(data.g3 || 0),
-      "{{G4}}": String(data.g4 || 0),
-      "{{G5}}": String(data.g5 || 0),
-      "{{G6}}": String(data.g6 || 0),
-      "{{G7}}": String(data.g7 || 0),
-      "{{G8}}": String(data.g8 || 0),
-      "{{Total}}": String(data.total || 0),
-      "{{Kategori}}": data.kategori || "-",
-      "{{Aspek_Teknis}}": data.aspek || "-",
-      "{{Interpretasi}}": data.interpretasi || "-",
-      "{{Deskripsi}}": data.deskripsi || "-",
-      "{{Rekomendasi}}": data.rekomendasi || "-",
-      "{{Narasi_G1}}": data.narasi_g1 || "-",
-      "{{Narasi_G2}}": data.narasi_g2 || "-",
-      "{{Narasi_G3}}": data.narasi_g3 || "-",
-      "{{Narasi_G4}}": data.narasi_g4 || "-",
-      "{{Narasi_G5}}": data.narasi_g5 || "-",
-      "{{Narasi_G6}}": data.narasi_g6 || "-",
-      "{{Narasi_G7}}": data.narasi_g7 || "-",
-      "{{Narasi_G8}}": data.narasi_g8 || "-",
-      "{{URL_Gambar}}": imageUrl || "-",
+      "{{id_test}}": data.id_test || "-",
+      "{{id_peserta}}": data.id_peserta || "-",
+      "{{nama}}": data.nama || "-",
+      "{{tanggal}}": data.tanggal || "-",
+      "{{total}}": String(data.total || 0),
+      "{{kategori}}": data.kategori || "-",
+      "{{narasi_g1}}": data.narasi_g1 || "-",
+      "{{narasi_g2}}": data.narasi_g2 || "-",
+      "{{narasi_g3}}": data.narasi_g3 || "-",
+      "{{narasi_g4}}": data.narasi_g4 || "-",
+      "{{narasi_g5}}": data.narasi_g5 || "-",
+      "{{narasi_g6}}": data.narasi_g6 || "-",
+      "{{narasi_g7}}": data.narasi_g7 || "-",
+      "{{narasi_g8}}": data.narasi_g8 || "-",
+      "{{aspek}}": data.aspek || "-",
+      "{{interpretasi}}": data.interpretasi || "-",
+      "{{deskripsi}}": data.deskripsi || "-",
+      "{{rekomendasi}}": data.rekomendasi || "-",
+      "{{imgUrl}}": imageUrl || "-"
     };
 
     Object.entries(replacements).forEach(([tag, value]) => {
@@ -154,10 +148,7 @@ function _generatePdfWartegg(data, imageUrl) {
     const pdfFile = folder.createFile(pdfBlob.setName(namaFile + ".pdf"));
 
     copy.setTrashed(true);
-    pdfFile.setSharing(
-      DriveApp.Access.ANYONE_WITH_LINK,
-      DriveApp.Permission.VIEW,
-    );
+    // pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW,);
     return pdfFile.getUrl();
   } catch (e) {
     return "";
