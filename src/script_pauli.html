@@ -3,7 +3,7 @@
 // PAULI
 // ============================================================
 
-const PAULI_ASPEK_LIST = [
+var PAULI_ASPEK_LIST = [
   { id: "kapasitas",  label: "ASPEK 1: KAPASITAS KERJA"                  },
   { id: "ketelitian", label: "ASPEK 2: KETELITIAN & KONSENTRASI"         },
   { id: "stabilitas", label: "ASPEK 3: STABILITAS & PENGENDALIAN EMOSI"  },
@@ -11,46 +11,55 @@ const PAULI_ASPEK_LIST = [
 ];
 
 function renderPauli() {
-  const lajurInputs = Array.from({ length: 20 }, (_, i) => i + 1).map(n => `
-    <div style="text-align:center;">
-      <label style="font-size:10px; font-weight:800; color:#94a3b8; display:block; margin-bottom:3px;">L-${n}</label>
-      <input type="number" id="lajur_${n}" value="0" oninput="hitungOtomatisPauli()"
-             style="width:100%; padding:8px; border-radius:8px; border:1px solid #e2e8f0; text-align:center; font-weight:700;">
-    </div>`).join("");
+  var lajurInputs = Array.from({ length: 20 }, function(_, i) { return i + 1; }).map(function(n) {
+    return '<div style="text-align:center;">' +
+           '<label style="font-size:10px; font-weight:800; color:#94a3b8; display:block; margin-bottom:3px;">L-' + n + '</label>' +
+           '<input type="number" id="lajur_' + n + '" value="0" oninput="hitungOtomatisPauli()"' +
+           ' style="width:100%; padding:8px; border-radius:8px; border:1px solid #e2e8f0; text-align:center; font-weight:700;">' +
+           '</div>';
+  }).join("");
 
-  const paramInputs = [
+  var paramInputsData = [
     { id: "total_n",      label: "TOTAL DIKERJAKAN (N)", ro: true  },
     { id: "total_salah",  label: "TOTAL SALAH (S)",      ro: false },
     { id: "total_loncat", label: "TOTAL LONCATAN (L)",   ro: false },
     { id: "total_betul",  label: "PEMBETULAN (P)",       ro: false }
-  ].map(p => `
-    <div style="margin-bottom:12px;">
-      <label style="font-size:11px; font-weight:700;">${p.label}</label>
-      <input type="number" id="${p.id}" value="0"
-             ${p.ro ? "readonly" : 'oninput="hitungOtomatisPauli()"'}
-             style="width:100%; padding:10px; border-radius:8px; border:1px solid #fcd34d; font-weight:700; background:#fff;">
-    </div>`).join("");
+  ];
 
-  const scoreCards = [
+  var paramInputs = paramInputsData.map(function(p) {
+    var readonlyAttr = p.ro ? "readonly" : 'oninput="hitungOtomatisPauli()"';
+    return '<div style="margin-bottom:12px;">' +
+           '<label style="font-size:11px; font-weight:700;">' + p.label + '</label>' +
+           '<input type="number" id="' + p.id + '" value="0" ' + readonlyAttr +
+           ' style="width:100%; padding:10px; border-radius:8px; border:1px solid #fcd34d; font-weight:700; background:#fff;">' +
+           '</div>';
+  }).join("");
+
+  var scoreCardsData = [
     { id: "score_total",        label: "JUMLAH KESELURUHAN",   bg: "#f8fafc", bd: "#e2e8f0", color: ""        },
     { id: "score_salah_persen", label: "KESALAHAN (SALAH %)",  bg: "#fff1f2", bd: "#fecdd3", color: "#9f1239" },
     { id: "score_pembetulan",   label: "PEMBETULAN",           bg: "#f0fdf4", bd: "#bbf7d0", color: "#14532d" },
     { id: "score_puncak",       label: "TINGGI (PUNCAK)",      bg: "#eff6ff", bd: "#bfdbfe", color: "#1e3a8a" },
     { id: "score_terendah",     label: "TITIK TERENDAH",       bg: "#f1f5f9", bd: "#cbd5e1", color: ""        },
     { id: "score_simpangan",    label: "SIMPANGAN (FLUKTUASI)",bg: "#fff7ed", bd: "#fed7aa", color: "#7c2d12" }
-  ].map(s => `
-    <div style="background:${s.bg}; padding:15px; border-radius:12px; border:1px solid ${s.bd};">
-      <label style="font-size:10px; font-weight:800; color:#64748b; display:block;">${s.label}</label>
-      <input type="text" id="${s.id}" readonly value="0"
-             style="width:100%; border:none; background:transparent; font-size:20px; font-weight:800; ${s.color ? "color:" + s.color : ""}">
-    </div>`).join("");
+  ];
 
-  const aspekPanels = PAULI_ASPEK_LIST.map(aspek => `
-    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:20px; padding:22px; border-left:5px solid #3b82f6;">
-      <span style="font-size:13px; font-weight:800; color:#1e293b; display:block; margin-bottom:12px;">${aspek.label}</span>
-      <textarea id="narasi_${aspek.id}" readonly
-                style="width:100%; height:85px; border-radius:12px; border:1px solid #f1f5f9; padding:12px; font-size:12px; resize:none; background:#fafafa;"></textarea>
-    </div>`).join("");
+  var scoreCards = scoreCardsData.map(function(s) {
+    var textColor = s.color ? "color:" + s.color : "";
+    return '<div style="background:' + s.bg + '; padding:15px; border-radius:12px; border:1px solid ' + s.bd + ';">' +
+           '<label style="font-size:10px; font-weight:800; color:#64748b; display:block;">' + s.label + '</label>' +
+           '<input type="text" id="' + s.id + '" readonly value="0"' +
+           ' style="width:100%; border:none; background:transparent; font-size:20px; font-weight:800; ' + textColor + '">' +
+           '</div>';
+  }).join("");
+
+  var aspekPanels = PAULI_ASPEK_LIST.map(function(aspek) {
+    return '<div style="background:#fff; border:1px solid #f1f5f9; border-radius:20px; padding:22px; border-left:5px solid #3b82f6;">' +
+           '<span style="font-size:13px; font-weight:800; color:#1e293b; display:block; margin-bottom:12px;">' + aspek.label + '</span>' +
+           '<textarea id="narasi_' + aspek.id + '" readonly' +
+           ' style="width:100%; height:85px; border-radius:12px; border:1px solid #f1f5f9; padding:12px; font-size:12px; resize:none; background:#fafafa;"></textarea>' +
+           '</div>';
+  }).join("");
 
   el("konten").innerHTML = `
     <div style="font-family:'Inter',sans-serif; max-width:1200px; margin:auto; padding-bottom:60px;">
@@ -84,19 +93,27 @@ function renderPauli() {
         <div style="margin-bottom:35px; border:2px dashed #3b82f6; border-radius:20px; padding:30px; text-align:center; background:#eff6ff;">
           <h4 style="font-size:16px; font-weight:800; color:#1e40af; margin-bottom:15px;">AI VISION SCANNER (OCR ENGINE)</h4>
           
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+          <div style="margin-bottom: 20px; background: #fff; display: inline-block; padding: 10px 20px; border-radius: 12px; border: 1px solid #bfdbfe; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <label style="font-size:14px; font-weight:800; color:#1e40af; cursor:pointer; display:flex; align-items:center; gap:10px; margin:0;">
+              <input type="checkbox" id="toggle_ai_pauli" checked style="width:18px; height:18px; cursor:pointer;" 
+                     onchange="document.getElementById('text_toggle_pauli').innerText = this.checked ? 'Sistem AI: AKTIF' : 'Sistem AI: NONAKTIF'">
+              <span id="text_toggle_pauli">Sistem AI: AKTIF</span>
+            </label>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:20px; margin-bottom:20px;">
             <div>
               <label style="font-size:13px; font-weight:700; color:#1e40af; display:block; margin-bottom:8px;">Gambar 1</label>
               <input type="file" id="file_pauli_1" accept="image/*" onchange="previewImagePauli(this, 1)" style="font-size:13px;">
               <div id="preview_container_pauli_1" style="margin-top:10px; display:none;">
-                <img id="img_preview_pauli_1" src="#" style="max-width:100%; max-height:500px; border-radius:12px; border:2px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                <img id="img_preview_pauli_1" src="#" style="width:100%; height:auto; border-radius:12px; border:2px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
               </div>
             </div>
             <div>
               <label style="font-size:13px; font-weight:700; color:#1e40af; display:block; margin-bottom:8px;">Gambar 2</label>
               <input type="file" id="file_pauli_2" accept="image/*" onchange="previewImagePauli(this, 2)" style="font-size:13px;">
               <div id="preview_container_pauli_2" style="margin-top:10px; display:none;">
-                <img id="img_preview_pauli_2" src="#" style="max-width:100%; max-height:500px; border-radius:12px; border:2px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                <img id="img_preview_pauli_2" src="#" style="width:100%; height:auto; border-radius:12px; border:2px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
               </div>
             </div>
           </div>
@@ -116,14 +133,14 @@ function renderPauli() {
         <div style="display:grid; grid-template-columns:1fr 350px; gap:25px; margin-bottom:35px;">
           <div style="background:#fff; border:1px solid #e2e8f0; border-radius:20px; padding:25px;">
             <h3 style="color:#334155; font-size:16px; font-weight:800; margin-bottom:20px;">DATA PENJUMLAHAN (20 LAJUR)</h3>
-            <div style="display:grid; grid-template-columns:repeat(10,1fr); gap:10px; margin-bottom:25px;">${lajurInputs}</div>
+            <div style="display:grid; grid-template-columns:repeat(10,1fr); gap:10px; margin-bottom:25px;">` + lajurInputs + `</div>
             <h4 style="font-size:13px; font-weight:800; color:#64748b; margin-bottom:15px; border-top:1px solid #eee; padding-top:15px;">Grafik Kurva Kerja</h4>
             <div id="chart_pauli_mini"
                  style="height:150px; width:100%; background:#fcfcfc; border-radius:12px; border:1px solid #f1f5f9; display:flex; align-items:flex-end; justify-content:space-around; padding:15px;"></div>
           </div>
           <div style="background:#fffbeb; padding:25px; border-radius:20px; border:1px solid #fde68a;">
             <h4 style="font-size:14px; font-weight:800; color:#b45309; margin-bottom:15px;">PARAMETER KUALITAS</h4>
-            ${paramInputs}
+            ` + paramInputs + `
           </div>
         </div>
 
@@ -134,12 +151,12 @@ function renderPauli() {
             <input type="text" id="final_score_angka" readonly value="0.00"
                    style="width:180px; border:none; background:transparent; font-size:48px; font-weight:900; color:#3b82f6; text-align:right; outline:none;">
           </div>
-          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:15px;">${scoreCards}</div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:15px;">` + scoreCards + `</div>
         </div>
 
         <div style="margin-top:40px; border-top:2px solid #f1f5f9; padding-top:30px;">
           <h3 style="color:#1e293b; font-size:18px; font-weight:800; margin-bottom:25px; text-align:center;">HASIL ANALISA ASPEK PSIKOLOGI</h3>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">${aspekPanels}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">` + aspekPanels + `</div>
         </div>
 
         <div style="border-top:3px double #f1f5f9; padding-top:40px; margin-top:40px;">
@@ -168,15 +185,15 @@ function renderPauli() {
     </div>`;
 
   loadDropdown();
-  google.script.run.withSuccessHandler(id => { el("id_test_pauli").value = id; }).generateIdTest("PAULI");
+  google.script.run.withSuccessHandler(function(id) { el("id_test_pauli").value = id; }).generateIdTest("PAULI");
   el("tgl_test").value = todayString();
 }
 
 function previewImagePauli(input, num) {
-  const container = el("preview_container_pauli_" + num);
+  var container = el("preview_container_pauli_" + num);
   if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = e => {
+    var reader = new FileReader();
+    reader.onload = function(e) {
       el("img_preview_pauli_" + num).src = e.target.result;
       container.style.display = "block";
     };
@@ -187,108 +204,148 @@ function previewImagePauli(input, num) {
 }
 
 function jalankanAI_Pauli() {
-  const file1 = el("file_pauli_1").files[0];
-  const file2 = el("file_pauli_2").files[0];
+  var isAiAktif = document.getElementById("toggle_ai_pauli").checked;
+  if (!isAiAktif) {
+    Swal.fire("AI Nonaktif", "Sistem AI sedang dimatikan. Silakan ketik angka secara manual di kolom lajur, atau aktifkan kembali tombol AI di atas.", "info");
+    return;
+  }
+
+  var file1 = el("file_pauli_1").files[0];
+  var file2 = el("file_pauli_2").files[0];
   if (!file1 && !file2) { Swal.fire("Perhatian", "Pilih gambar hasil tes dulu", "warning"); return; }
 
-  Swal.fire({ title: "AI Memindai Lembar Kerja", text: "Menganalisa...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  Swal.fire({ 
+    title: "AI Memindai Lembar Kerja", 
+    html: "Memproses Gambar 1...", 
+    allowOutsideClick: false, 
+    didOpen: function() { Swal.showLoading(); } 
+  });
 
-  const processFiles = (base64_1, base64_2) => {
-    google.script.run
-      .withFailureHandler(err => { Swal.close(); Swal.fire("Error Koneksi", err.message, "error"); })
-      .withSuccessHandler(res => {
-        Swal.close();
-        if (typeof res === "string") { try { res = JSON.parse(res); } catch (e) {} }
-        if (res.error) { Swal.fire("Gagal", res.error, "error"); return; }
+  var filesToProcess = [];
+  if (file1) filesToProcess.push({ file: file1, num: 1 });
+  if (file2) filesToProcess.push({ file: file2, num: 2 });
 
-        const logEl = el("log_pengamatan_ai");
-        if (logEl) {
-          logEl.value = res.log_pengamatan
-            || "AI tidak mengirimkan log.\n\nData mentah:\n" + JSON.stringify(res, null, 2);
-        }
+  var currentIndex = 0;
+  var allResults = [];
 
-        (res.lajur || []).forEach((v, i) => {
-          const inp = el("lajur_" + (i + 1));
-          if (inp) inp.value = v;
-        });
+  function processNext() {
+    if (currentIndex >= filesToProcess.length) {
+      mergePauliResults(allResults);
+      return;
+    }
 
-        el("total_salah").value  = res.total_salah  || 0;
-        el("total_loncat").value = res.total_loncat || 0;
-        el("total_betul").value  = res.total_betul  || 0;
+    var current = filesToProcess[currentIndex];
+    var reader = new FileReader();
+    
+    reader.onload = function(e) {
+      var base64 = e.target.result.split(",")[1];
 
-        PAULI_ASPEK_LIST.forEach(aspek => {
-          const narEl = el("narasi_" + aspek.id);
-          if (narEl) narEl.value = res["narasi_" + aspek.id] || "";
-        });
-        el("analisa_keseluruhan").value = res.analisa_global || "";
+      google.script.run
+        .withFailureHandler(function(err) { 
+          Swal.close(); 
+          Swal.fire("Error Koneksi", err.message, "error"); 
+        })
+        .withSuccessHandler(function(res) {
+          Swal.close();
+          if (typeof res === "string") { try { res = JSON.parse(res); } catch (e) {} }
+          if (res.error) { 
+            Swal.fire("Gagal", res.error, "error"); 
+            return; 
+          }
 
-        hitungOtomatisPauli();
-        Swal.fire("Selesai", "Data telah dimuat. Periksa Log Pengamatan.", "success");
-      })
-      .pauliJembatanAI(base64_1, base64_2);
+          allResults.push(res);
+          currentIndex++;
+
+          if (currentIndex < filesToProcess.length) {
+            Swal.fire({ 
+              title: "AI Memindai Lembar Kerja", 
+              html: "Memproses Gambar " + (currentIndex + 1) + " dari " + filesToProcess.length + "...", 
+              allowOutsideClick: false, 
+              didOpen: function() { Swal.showLoading(); } 
+            });
+            processNext();
+          } else {
+            mergePauliResults(allResults);
+          }
+        })
+        .prosesAnalisaAIPauli(base64);
+    };
+    
+    reader.readAsDataURL(current.file);
+  }
+
+  processNext();
+}
+
+function mergePauliResults(results) {
+  var merged = {
+    lajur: Array(20).fill(0),
+    total_salah: 0,
+    total_loncat: 0,
+    total_betul: 0,
+    log_pengamatan: ""
   };
 
-  if (file1 && file2) {
-    const reader1 = new FileReader();
-    const reader2 = new FileReader();
-    let base64_1 = null, base64_2 = null;
+  var lajurIndex = 0;
+  
+  results.forEach(function(res, idx) {
+    merged.log_pengamatan += "=== GAMBAR " + (idx + 1) + " ===\n" + (res.log_pengamatan || "Tidak ada log") + "\n\n";
     
-    reader1.onload = e1 => {
-      base64_1 = e1.target.result.split(",")[1];
-      if (base64_2) processFiles(base64_1, base64_2);
-    };
-    reader2.onload = e2 => {
-      base64_2 = e2.target.result.split(",")[1];
-      if (base64_1) processFiles(base64_1, base64_2);
-    };
-    reader1.readAsDataURL(file1);
-    reader2.readAsDataURL(file2);
-  } else if (file1) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const base64 = e.target.result.split(",")[1];
-      processFiles(base64, null);
-    };
-    reader.readAsDataURL(file1);
-  } else if (file2) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const base64 = e.target.result.split(",")[1];
-      processFiles(null, base64);
-    };
-    reader.readAsDataURL(file2);
+    if (res.lajur && Array.isArray(res.lajur)) {
+      res.lajur.forEach(function(val) {
+        if (lajurIndex < 20) {
+          merged.lajur[lajurIndex] = val;
+          lajurIndex++;
+        }
+      });
+    }
+    
+    merged.total_salah += res.total_salah || 0;
+    merged.total_loncat += res.total_loncat || 0;
+    merged.total_betul += res.total_betul || 0;
+  });
+
+  var logEl = el("log_pengamatan_ai");
+  if (logEl) {
+    logEl.value = merged.log_pengamatan;
   }
+
+  merged.lajur.forEach(function(v, i) {
+    var inp = el("lajur_" + (i + 1));
+    if (inp) inp.value = v;
+  });
+
+  el("total_salah").value  = merged.total_salah;
+  el("total_loncat").value = merged.total_loncat;
+  el("total_betul").value  = merged.total_betul;
+
+  hitungOtomatisPauli();
+  Swal.fire("Selesai", "Data dari " + results.length + " gambar telah dimuat. Periksa Log Pengamatan.", "success");
 }
 
 function hitungOtomatisPauli() {
-  const vals = Array.from({ length: 20 }, (_, i) => parseInt(el("lajur_" + (i + 1)).value) || 0);
+  var vals = Array.from({ length: 20 }, function(_, i) { return parseInt(el("lajur_" + (i + 1)).value) || 0; });
 
-  // === PARAMETER DASAR ===
-  const n          = vals.reduce((a, b) => a + b, 0);  // Total Dikerjakan
-  const s          = parseInt(el("total_salah").value) || 0;
-  const l          = parseInt(el("total_loncat").value) || 0;
-  const p          = parseInt(el("total_betul").value) || 0;
+  var n = vals.reduce(function(a, b) { return a + b; }, 0);
+  var s = parseInt(el("total_salah").value) || 0;
+  var l = parseInt(el("total_loncat").value) || 0;
+  var p = parseInt(el("total_betul").value) || 0;
   
-  // === STATISTIK ===
-  const puncak     = Math.max(...vals);
-  const positif    = vals.filter(v => v > 0);
-  const terendah   = positif.length > 0 ? Math.min(...positif) : 0;
-  const rentang    = puncak - terendah;
-  const persenSalah = n > 0 ? ((s / n) * 100) : 0;
+  var puncak = Math.max.apply(null, vals);
+  var positif = vals.filter(function(v) { return v > 0; });
+  var terendah = positif.length > 0 ? Math.min.apply(null, positif) : 0;
+  var rentang = puncak - terendah;
+  var persenSalah = n > 0 ? ((s / n) * 100) : 0;
   
-  // === SIMPANGAN (AVEDEV) ===
-  const mean = n > 0 ? (n / 20) : 0;
-  const simpangan = vals.reduce((sum, v) => sum + Math.abs(v - mean), 0) / 20;
+  var mean = n > 0 ? (n / 20) : 0;
+  var simpangan = vals.reduce(function(sum, v) { return sum + Math.abs(v - mean); }, 0) / 20;
   
-  // === SKOR KOMPONEN (0-100) ===
-  const skorKuantitas   = (n / 3000) * 100;
-  const skorKetelitian  = 100 - (persenSalah * 10);
-  const skorStabilitas  = 100 - (simpangan * 5);
+  var skorKuantitas = (n / 3000) * 100;
+  var skorKetelitian = 100 - (persenSalah * 10);
+  var skorStabilitas = 100 - (simpangan * 5);
   
-  // === FINAL SCORE (Weighted) ===
-  const finalScore = (skorKuantitas * 0.40) + (skorKetelitian * 0.35) + (skorStabilitas * 0.25);
+  var finalScore = (skorKuantitas * 0.40) + (skorKetelitian * 0.35) + (skorStabilitas * 0.25);
   
-  // === UPDATE UI ===
   el("total_n").value            = n;
   el("score_total").value        = n;
   el("final_score_angka").value  = finalScore.toFixed(2);
@@ -298,8 +355,8 @@ function hitungOtomatisPauli() {
   el("score_terendah").value     = terendah;
   el("score_simpangan").value    = simpangan.toFixed(2);
 
-  // === KATEGORI & REKOMENDASI ===
-  let kategori, rekomendasi;
+  var kategori = "";
+  var rekomendasi = "";
   if (finalScore > 2400) {
     kategori = "ISTIMEWA";
     rekomendasi = "MS UNTUK SELEKSI";
@@ -317,15 +374,12 @@ function hitungOtomatisPauli() {
   el("hasil_kategori_final").innerText    = kategori;
   el("hasil_rekomendasi_final").innerText = rekomendasi;
 
-  // === GENERATE NARASI OTOMATIS ===
   generateNarasiPauli(kategori, persenSalah, simpangan, vals);
-
   renderPauliMiniChart(vals);
 }
 
 function generateNarasiPauli(kategori, persenSalah, simpangan, vals) {
-  // === NARASI KAPASITAS KERJA ===
-  let narasiKapasitas = "";
+  var narasiKapasitas = "";
   if (kategori === "ISTIMEWA") {
     narasiKapasitas = "Memiliki kapasitas energi psikis yang sangat besar. Mampu bekerja di bawah tekanan ekstrem dengan produktivitas yang jauh di atas rata-rata. Sangat tangguh secara mental.";
   } else if (kategori === "BAIK") {
@@ -337,8 +391,7 @@ function generateNarasiPauli(kategori, persenSalah, simpangan, vals) {
   }
   el("narasi_kapasitas").value = narasiKapasitas;
 
-  // === NARASI KETELITIAN & KONSENTRASI ===
-  let narasiKetelitian = "";
+  var narasiKetelitian = "";
   if (kategori === "ISTIMEWA") {
     narasiKetelitian = "Memiliki ketajaman sensorik dan konsentrasi yang luar biasa. Sangat minim risiko dalam melakukan kesalahan prosedural atau teknis di lapangan.";
   } else if (kategori === "BAIK") {
@@ -350,8 +403,7 @@ function generateNarasiPauli(kategori, persenSalah, simpangan, vals) {
   }
   el("narasi_ketelitian").value = narasiKetelitian;
 
-  // === NARASI STABILITAS & PENGENDALIAN EMOSI ===
-  let narasiStabilitas = "";
+  var narasiStabilitas = "";
   if (kategori === "ISTIMEWA") {
     narasiStabilitas = "Menunjukkan pengendalian diri yang matang. Tidak mudah goyah oleh tekanan lingkungan. Memiliki ketenangan luar biasa dalam mengambil keputusan.";
   } else if (kategori === "BAIK") {
@@ -363,8 +415,7 @@ function generateNarasiPauli(kategori, persenSalah, simpangan, vals) {
   }
   el("narasi_stabilitas").value = narasiStabilitas;
 
-  // === NARASI GRAFIK & KURVA BELAJAR ===
-  let narasiKurva = "";
+  var narasiKurva = "";
   if (kategori === "ISTIMEWA") {
     narasiKurva = "Memiliki mentalitas pembelajar dan daya juang (fighting spirit) yang tinggi. Semakin berat tantangan, motivasi subjek justru semakin meningkat.";
   } else if (kategori === "BAIK") {
@@ -376,10 +427,9 @@ function generateNarasiPauli(kategori, persenSalah, simpangan, vals) {
   }
   el("narasi_kurva").value = narasiKurva;
 
-  // === NARASI ANALISA KESELURUHAN ===
-  let narasiGlobal = "";
-  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-  const trenNaik = vals[vals.length - 1] > vals[0];
+  var narasiGlobal = "";
+  var mean = vals.reduce(function(a, b) { return a + b; }, 0) / vals.length;
+  var trenNaik = vals[vals.length - 1] > vals[0];
   
   if (kategori === "ISTIMEWA" && persenSalah < 2 && trenNaik) {
     narasiGlobal = "Berdasarkan hasil uji psikometri, subjek menunjukkan profil kompetensi yang sangat solid dengan Kapasitas Kerja yang berada di level istimewa. Hal ini mencerminkan energi psikis yang besar untuk menyelesaikan tugas-tugas berat dalam durasi panjang. Kekuatan utama subjek terletak pada kemampuannya menjaga Ketelitian dan Konsentrasi tetap tajam meskipun berada di bawah tekanan waktu (time pressure).\n\nSecara emosional, subjek tergolong Sangat Stabil, mampu mengendalikan diri dengan baik sehingga ritme kerjanya konsisten dari awal hingga akhir. Kurva Belajar yang progresif menunjukkan bahwa subjek memiliki daya juang tinggi dan tidak mudah menyerah pada situasi yang monoton. Secara keseluruhan, subjek sangat potensial untuk ditempatkan pada posisi yang membutuhkan stamina mental dan akurasi tinggi.";
@@ -390,35 +440,41 @@ function generateNarasiPauli(kategori, persenSalah, simpangan, vals) {
   } else if (kategori === "KURANG" || persenSalah > 5) {
     narasiGlobal = "Hasil analisa menunjukkan Kapasitas Kerja subjek masih terbatas, di mana energi psikis cenderung cepat terkuras sebelum tugas selesai. Aspek Ketelitian dan Konsentrasi perlu menjadi perhatian serius karena ditemukan tingkat kesalahan yang cukup tinggi, mengindikasikan subjek mudah terdistraksi dan kurang fokus pada detail.\n\nGrafik yang cenderung menurun (Regresif) mencerminkan daya tahan stres (stress tolerance) yang rendah dan kecenderungan untuk menyerah saat menghadapi beban kerja yang berulang. Secara psikologis, subjek memerlukan pengembangan lebih lanjut dalam hal regulasi emosi dan peningkatan fokus agar dapat memenuhi kualifikasi standar operasional lapangan.";
   } else {
-    // Fallback narrative based on category
-    narasiGlobal = `Subjek menunjukkan performa ${kategori.toLowerCase()} dalam Tes Pauli. Kapasitas kerja ${kategori === "CUKUP" ? "cukup memadai" : "perlu dikembangkan"} dengan tingkat ketelitian ${persenSalah > 3 ? "yang perlu ditingkatkan" : "yang baik"}. Stabilitas emosi menunjukkan ${simpangan > 10 ? "fluktuasi yang cukup signifikan" : "konsistensi yang baik"}. Perlu ${kategori === "KURANG" ? "pendampingan intensif" : "pengembangan lebih lanjut"} untuk mencapai standar optimal.`;
+    narasiGlobal = "Subjek menunjukkan performa " + kategori.toLowerCase() + " dalam Tes Pauli. Kapasitas kerja " + (kategori === "CUKUP" ? "cukup memadai" : "perlu dikembangkan") + " dengan tingkat ketelitian " + (persenSalah > 3 ? "yang perlu ditingkatkan" : "yang baik") + ". Stabilitas emosi menunjukkan " + (simpangan > 10 ? "fluktuasi yang cukup signifikan" : "konsistensi yang baik") + ". Perlu " + (kategori === "KURANG" ? "pendampingan intensif" : "pengembangan lebih lanjut") + " untuk mencapai standar optimal.";
   }
   
   el("analisa_keseluruhan").value = narasiGlobal;
 }
 
 function renderPauliMiniChart(data) {
-  const chart = el("chart_pauli_mini");
+  var chart = el("chart_pauli_mini");
   if (!chart) return;
   chart.innerHTML = "";
-  const max = Math.max(...data) || 1;
-  data.forEach(v => {
-    const bar = document.createElement("div");
-    bar.style.cssText = `width:12px; height:${(v / max) * 100}%; background:linear-gradient(to top,#3b82f6,#60a5fa); border-radius:3px 3px 0 0;`;
+  var max = Math.max.apply(null, data) || 1;
+  data.forEach(function(v) {
+    var bar = document.createElement("div");
+    bar.style.cssText = "width:12px; height:" + ((v / max) * 100) + "%; background:linear-gradient(to top,#3b82f6,#60a5fa); border-radius:3px 3px 0 0;";
     chart.appendChild(bar);
   });
 }
 
 function simpanPauli() {
-  const lajur = Array.from({ length: 20 }, (_, i) => el("lajur_" + (i + 1)).value || 0);
+  var lajur = Array.from({ length: 20 }, function(_, i) { return el("lajur_" + (i + 1)).value || 0; });
 
-  const payload = {
-    id_test: el("id_test_pauli").value, id_peserta: el("idPeserta").value,
-    nama: el("nama").value, tanggal: el("tgl_test").value, lajur,
-    total_n: el("total_n").value, total_salah: el("total_salah").value,
-    total_loncat: el("total_loncat").value, total_betul: el("total_betul").value,
-    score_akhir: el("final_score_angka").value, persen_salah: el("score_salah_persen").value,
-    puncak: el("score_puncak").value, terendah: el("score_terendah").value,
+  var payload = {
+    id_test: el("id_test_pauli").value, 
+    id_peserta: el("idPeserta").value,
+    nama: el("nama").value, 
+    tanggal: el("tgl_test").value, 
+    lajur: lajur,
+    total_n: el("total_n").value, 
+    total_salah: el("total_salah").value,
+    total_loncat: el("total_loncat").value, 
+    total_betul: el("total_betul").value,
+    score_akhir: el("final_score_angka").value, 
+    persen_salah: el("score_salah_persen").value,
+    puncak: el("score_puncak").value, 
+    terendah: el("score_terendah").value,
     simpangan: el("score_simpangan").value,
     kategori: el("hasil_kategori_final").innerText,
     rekomendasi: el("hasil_rekomendasi_final").innerText,
@@ -429,10 +485,10 @@ function simpanPauli() {
     n_kurva:      el("narasi_kurva").value
   };
 
-  Swal.fire({ title: "Menyimpan...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  Swal.fire({ title: "Menyimpan...", allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
   google.script.run
-    .withSuccessHandler(msg => { Swal.fire("Tersimpan!", msg, "success"); })
-    .withFailureHandler(err => { Swal.fire("Error", err.message, "error"); })
-    .simpanKeSheetPauli(payload);
+    .withSuccessHandler(function(msg) { Swal.fire("Tersimpan!", msg, "success"); })
+    .withFailureHandler(function(err) { Swal.fire("Error", err.message, "error"); })
+    .eksekusiSimpanPauli(payload);
 }
 </script>

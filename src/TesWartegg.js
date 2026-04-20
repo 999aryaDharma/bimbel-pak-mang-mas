@@ -48,8 +48,8 @@ function simpanWartegg(data) {
       // Gunakan Folder ID Wartegg
       imageUrl = uploadFile(
         base64Clean,
-        "wartegg_" + data.id_test + ".jpg",
-        CONFIG.FOLDER_WARTEGG,
+        "Wartegg_" + data.nama + ".png",
+        CONFIG.FOLDER_WARTEGG_FOTO,
       );
     }
 
@@ -99,7 +99,7 @@ function simpanWartegg(data) {
 /**
  * Generate PDF laporan Wartegg dari Google Doc template.
  * @param {object} data - Data hasil tes
- * @param {string} imageUrl - URL gambar yang sudah diupload
+ * @param {string} imageUrl - URL gambar yang sudah diupload (untuk di sheet)
  * @returns {string} URL PDF yang dihasilkan, atau "" jika gagal
  */
 function _generatePdfWartegg(data, imageUrl) {
@@ -135,13 +135,51 @@ function _generatePdfWartegg(data, imageUrl) {
       "{{aspek}}": data.aspek || "-",
       "{{interpretasi}}": data.interpretasi || "-",
       "{{deskripsi}}": data.deskripsi || "-",
-      "{{rekomendasi}}": data.rekomendasi || "-",
-      "{{imgUrl}}": imageUrl || "-"
+      "{{rekomendasi}}": data.rekomendasi || "-"
     };
 
+    // 1. Ganti semua teks narasi
     Object.entries(replacements).forEach(([tag, value]) => {
       body.replaceText(tag, value);
     });
+
+    // 2. Sisipkan GAMBAR secara visual ke dalam dokumen
+    const imageTag = "{{imgUrl}}";
+    const found = body.findText(imageTag);
+    
+    if (found) {
+      const textElement = found.getElement();
+      const parent = textElement.getParent();
+      
+      // Hapus teks {{imgUrl}}
+      textElement.asText().setText(textElement.asText().getText().replace(imageTag, ""));
+      
+      if (data.imageFile && data.imageFile.length > 100) {
+        try {
+          const base64Clean = data.imageFile.replace(/^data:image\/[a-z]+;base64,/, "");
+          const imageBlob = Utilities.newBlob(Utilities.base64Decode(base64Clean), "image/jpeg", "wartegg.jpg");
+          
+          let inlineImage;
+          if (parent.getType() === DocumentApp.ElementType.PARAGRAPH) {
+             inlineImage = parent.asParagraph().appendInlineImage(imageBlob);
+          } else {
+             inlineImage = body.appendImage(imageBlob);
+          }
+          
+          // Sesuaikan ukuran gambar agar tidak terpotong kertas (Maksimal lebar ~500px)
+          const width = inlineImage.getWidth();
+          const height = inlineImage.getHeight();
+          const maxWidth = 500; 
+          if (width > maxWidth) {
+             const ratio = maxWidth / width;
+             inlineImage.setWidth(maxWidth);
+             inlineImage.setHeight(height * ratio);
+          }
+        } catch(e) {
+           console.error("Gagal menyisipkan gambar Wartegg:", e);
+        }
+      }
+    }
 
     doc.saveAndClose();
     const pdfBlob = copy.getAs(MimeType.PDF);
@@ -153,6 +191,52 @@ function _generatePdfWartegg(data, imageUrl) {
   } catch (e) {
     return "";
   }
+}
+
+function diagnosisWartegg() {
+  const folderID   = CONFIG.FOLDER_WARTEGG;
+  const templateID = CONFIG.TEMPLATE_WARTEGG;
+
+  console.log("=== DIAGNOSIS HTP ===");
+
+  try {
+    const folder = DriveApp.getFolderById(folderID);
+    console.log("OK - Folder ditemukan: " + folder.getName());
+  } catch(e) {
+    console.log("GAGAL - Folder: " + e.message);
+  }
+
+  try {
+    const template = DriveApp.getFileById(templateID);
+    console.log("OK - Template ditemukan: " + template.getName());
+  } catch(e) {
+    console.log("GAGAL - Template: " + e.message);
+  }
+
+  try {
+    const folder = DriveApp.getFolderById(folderID);
+    const blob = Utilities.newBlob("test", "text/plain", "test.txt");
+    const file = folder.createFile(blob);
+    console.log("OK - createFile berhasil: " + file.getId());
+    file.setTrashed(true);
+  } catch(e) {
+    console.log("GAGAL - createFile: " + e.message);
+  }
+
+  try {
+    const template = DriveApp.getFileById(templateID);
+    const folder = DriveApp.getFolderById(folderID);
+    const copy = template.makeCopy("TEST_COPY", folder);
+    console.log("OK - makeCopy berhasil: " + copy.getId());
+    copy.setTrashed(true);
+  } catch(e) {
+    console.log("GAGAL - makeCopy: " + e.message);
+  }
+}
+
+function cekAkunScript() {
+  console.log("Akun aktif: " + Session.getActiveUser().getEmail());
+  console.log("Akun efektif: " + Session.getEffectiveUser().getEmail());
 }
 
 // --- Internal Helper ---

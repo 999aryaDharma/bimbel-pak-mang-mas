@@ -20,10 +20,10 @@
   ];
 
   const HTP_ASPEK_LIST = [
-    { id: "pro", label: "PRO (Proporsi)" },
-    { id: "detl", label: "DETL (Detail)" },
+    { id: "pro",  label: "PRO (Proporsi)"    },
+    { id: "detl", label: "DETL (Detail)"     },
     { id: "pers", label: "PERS (Perspektif)" },
-    { id: "line", label: "LINE (Garis)" },
+    { id: "line", label: "LINE (Garis)"      },
   ];
 
   // --- Render ---
@@ -67,7 +67,7 @@
     htpDataCache = {};
     loadDropdown();
     google.script.run
-      .withSuccessHandler((id) => {
+      .withSuccessHandler(function(id) {
         el("id_test_htp").value = id;
       })
       .generateIdTest("HTP");
@@ -112,25 +112,21 @@
             ANALISA HASIL SCORE
           </label>
           <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:10px;">
-            ${HTP_ASPEK_LIST.map(
-              (aspek) => `
+            ${HTP_ASPEK_LIST.map((aspek) => `
               <div>
                 <label style="font-size:10px; font-weight:700; color:#94a3b8;">${aspek.label}</label>
                 <input type="number" id="skor_${tahap.id}_${aspek.id}" value="0" min="1" max="5"
                        oninput="hitungTotalPerTahap('${tahap.id}')"
                        style="width:100%; padding:10px; border-radius:8px; border:1px solid #e2e8f0; text-align:center; font-weight:700;">
-              </div>`,
-            ).join("")}
+              </div>`).join("")}
           </div>
           <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;">
-            ${HTP_ASPEK_LIST.map(
-              (aspek) => `
+            ${HTP_ASPEK_LIST.map((aspek) => `
               <div>
                 <label style="font-size:9px; font-weight:700; color:#64748b;">NARASI ${aspek.label}</label>
                 <textarea id="narasi_detail_${tahap.id}_${aspek.id}"
                           style="width:100%; height:50px; padding:8px; border-radius:6px; border:1px solid #e2e8f0; font-size:11px; resize:none;"></textarea>
-              </div>`,
-            ).join("")}
+              </div>`).join("")}
           </div>
         </div>
       </div>
@@ -140,16 +136,12 @@
           HASIL ANALISA KESIMPULAN SCORE
         </label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-          ${["teknis", "konten", "simbolis", "observasi"]
-            .map(
-              (f) => `
+          ${["teknis", "konten", "simbolis", "observasi"].map((f) => `
             <div>
               <label style="font-size:11px; font-weight:700;">ANALISA ${f.toUpperCase()}</label>
               <textarea id="${f}_${tahap.id}"
                         style="width:100%; height:60px; padding:10px; border-radius:8px; border:1px solid #e2e8f0;"></textarea>
-            </div>`,
-            )
-            .join("")}
+            </div>`).join("")}
         </div>
       </div>
     </div>`;
@@ -178,26 +170,27 @@
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
         ${[
-          { id: "final_teknis", label: "Aspek Teknis" },
+          { id: "final_teknis",       label: "Aspek Teknis" },
           { id: "final_interpretasi", label: "Interpretasi Objek Konten" },
-          { id: "final_dinamika", label: "Dinamika Psikologis" },
-          { id: "final_profil", label: "Profil Perilaku & Rekomendasi" },
-        ]
-          .map(
-            (item) => `
+          { id: "final_dinamika",     label: "Dinamika Psikologis" },
+          { id: "final_profil",       label: "Profil Perilaku & Rekomendasi" },
+        ].map((item) => `
           <div>
             <label style="font-weight:700; margin-bottom:8px; display:block; color:#334155;">${item.label}</label>
             <textarea id="${item.id}"
                       style="width:100%; height:120px; border-radius:12px; border:1px solid #cbd5e1; padding:15px;"></textarea>
-          </div>`,
-          )
-          .join("")}
+          </div>`).join("")}
       </div>
 
       <button onclick="simpanHTP()"
               style="background:#10b981; color:white; width:100%; padding:20px; border:none; border-radius:15px; font-weight:800; font-size:18px; margin-top:30px; cursor:pointer;">
         Simpan dan Cetak Laporan PDF (HTP)
       </button>
+
+      <div id="pdfPreviewHTP" style="display:none; margin-top:30px;">
+        <iframe id="frameLaporanHTP" src=""
+                style="width:100%; height:600px; border:1px solid #e2e8f0; border-radius:12px;"></iframe>
+      </div>
     </div>`;
   }
 
@@ -206,109 +199,80 @@
   function handlePreview(input, tahapId) {
     if (!input.files[0]) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
-      el(`preview_${tahapId}`).innerHTML =
-        `<img src="${e.target.result}" style="max-width:100%; border-radius:10px; border:2px solid #6366f1; margin-top:10px;">`;
-      const btn = el(`btn_ai_${tahapId}`);
-      if (btn) {
-        btn.disabled = false;
-        btn.style.background = "#6366f1";
-      }
+    reader.onload = function(e) {
+      el("preview_" + tahapId).innerHTML =
+        '<img src="' + e.target.result + '" style="max-width:100%; border-radius:10px; border:2px solid #6366f1; margin-top:10px;">';
+      const btn = el("btn_ai_" + tahapId);
+      if (btn) { btn.disabled = false; btn.style.background = "#6366f1"; }
     };
     reader.readAsDataURL(input.files[0]);
   }
 
   function jalankanAI_HTP(tahapId) {
-    const btn = el(`btn_ai_${tahapId}`);
-    const preview = document.querySelector(`#preview_${tahapId} img`);
-    if (!preview) {
-      alert("Upload gambar terlebih dahulu!");
-      return;
-    }
+    const btn     = el("btn_ai_" + tahapId);
+    const preview = document.querySelector("#preview_" + tahapId + " img");
+    if (!preview) { alert("Upload gambar terlebih dahulu!"); return; }
 
-    if (btn) {
-      btn.innerHTML = "Memproses...";
-      btn.disabled = true;
-      btn.style.background = "#94a3b8";
-    }
+    if (btn) { btn.innerHTML = "Memproses..."; btn.disabled = true; btn.style.background = "#94a3b8"; }
 
     google.script.run
-      .withSuccessHandler((res) => {
+      .withSuccessHandler(function(res) {
         if (res.error) {
           alert("Error: " + res.error);
-          if (btn) {
-            btn.innerHTML = "Gagal";
-            btn.disabled = false;
-          }
+          if (btn) { btn.innerHTML = "Gagal"; btn.disabled = false; }
           return;
         }
         htpDataCache[tahapId] = res.db_referensi || null;
 
-        HTP_ASPEK_LIST.forEach((aspek) => {
-          const elSkor = el(`skor_${tahapId}_${aspek.id}`);
-          const elNarasi = el(`narasi_detail_${tahapId}_${aspek.id}`);
-          if (elSkor) elSkor.value = res.skor[aspek.id] || 0;
+        HTP_ASPEK_LIST.forEach(function(aspek) {
+          const elSkor   = el("skor_"          + tahapId + "_" + aspek.id);
+          const elNarasi = el("narasi_detail_" + tahapId + "_" + aspek.id);
+          if (elSkor)   elSkor.value   = res.skor[aspek.id]   || 0;
           if (elNarasi) elNarasi.value = res.narasi[aspek.id] || "";
         });
 
         hitungTotalPerTahap(tahapId);
-        if (btn) {
-          btn.innerHTML = "Sudah Dianalisa";
-          btn.style.background = "#10b981";
-          btn.disabled = false;
-        }
+        if (btn) { btn.innerHTML = "Sudah Dianalisa"; btn.style.background = "#10b981"; btn.disabled = false; }
       })
-      .withFailureHandler((err) => {
+      .withFailureHandler(function(err) {
         console.error("Server error:", err);
-        if (btn) {
-          btn.innerHTML = "Error Server";
-          btn.disabled = false;
-        }
+        if (btn) { btn.innerHTML = "Error Server"; btn.disabled = false; }
       })
       .panggilAI_HTP(preview.src, tahapId);
   }
 
   function hitungTotalPerTahap(tahapId) {
     let total = 0;
-    HTP_ASPEK_LIST.forEach((aspek) => {
-      const elSkor = el(`skor_${tahapId}_${aspek.id}`);
-      const elNarasi = el(`narasi_detail_${tahapId}_${aspek.id}`);
+    HTP_ASPEK_LIST.forEach(function(aspek) {
+      const elSkor   = el("skor_"          + tahapId + "_" + aspek.id);
+      const elNarasi = el("narasi_detail_" + tahapId + "_" + aspek.id);
       if (!elSkor) return;
 
       let nilai = parseInt(elSkor.value) || 0;
-      if (nilai > 5) {
-        nilai = 5;
-        elSkor.value = 5;
-      }
+      if (nilai > 5) { nilai = 5; elSkor.value = 5; }
       total += nilai;
 
       if (elNarasi) {
         const cache = htpDataCache[tahapId];
-        const teks =
-          cache && cache.narasi && cache.narasi[aspek.id]
-            ? cache.narasi[aspek.id][String(nilai)] || ""
-            : "";
+        const teks  = cache && cache.narasi && cache.narasi[aspek.id]
+          ? cache.narasi[aspek.id][String(nilai)] || "" : "";
         if (teks) elNarasi.value = teks;
       }
     });
 
     const kategori = getKategoriHTP(total);
-    const elTotal = el(`total_score_${tahapId}`);
-    const elKat = el(`kategori_${tahapId}`);
+    const elTotal  = el("total_score_" + tahapId);
+    const elKat    = el("kategori_"    + tahapId);
     if (elTotal) elTotal.value = total;
-    if (elKat) {
-      elKat.value = kategori;
-      elKat.style.color = HTP_COLORS[kategori] || "#1e293b";
-    }
+    if (elKat)   { elKat.value = kategori; elKat.style.color = HTP_COLORS[kategori] || "#1e293b"; }
 
-    const cache = htpDataCache[tahapId];
-    const kesimpulan =
-      cache && cache.kesimpulan && cache.kesimpulan[kategori]
-        ? cache.kesimpulan[kategori]
-        : { teknis: "-", konten: "-", simbolis: "-", observasi: "-" };
+    const cache      = htpDataCache[tahapId];
+    const kesimpulan = cache && cache.kesimpulan && cache.kesimpulan[kategori]
+      ? cache.kesimpulan[kategori]
+      : { teknis: "-", konten: "-", simbolis: "-", observasi: "-" };
 
-    ["teknis", "konten", "simbolis", "observasi"].forEach((f) => {
-      const elF = el(`${f}_${tahapId}`);
+    ["teknis", "konten", "simbolis", "observasi"].forEach(function(f) {
+      const elF = el(f + "_" + tahapId);
       if (elF) elF.value = kesimpulan[f] || "-";
     });
 
@@ -317,26 +281,18 @@
 
   function hitungTotalKeseluruhan() {
     let grand = 0;
-    HTP_TAHAP_LIST.forEach((t) => {
-      grand += parseInt((el(`total_score_${t.id}`) || {}).value) || 0;
+    HTP_TAHAP_LIST.forEach(function(t) {
+      grand += parseInt((el("total_score_" + t.id) || {}).value) || 0;
     });
 
     const elGrand = el("total_keseluruhan");
     if (elGrand) elGrand.value = grand;
 
-    const kategori =
-      grand >= 60
-        ? "Sangat Baik"
-        : grand >= 40
-          ? "Baik"
-          : grand >= 20
-            ? "Cukup"
-            : "Rendah";
+    const kategori = grand >= 60 ? "Sangat Baik"
+                   : grand >= 40 ? "Baik"
+                   : grand >= 20 ? "Cukup" : "Rendah";
     const elKat = el("kategori_keseluruhan");
-    if (elKat) {
-      elKat.value = kategori;
-      elKat.style.color = HTP_COLORS[kategori];
-    }
+    if (elKat) { elKat.value = kategori; elKat.style.color = HTP_COLORS[kategori]; }
 
     _isiNarasiFinal(kategori);
   }
@@ -368,113 +324,134 @@
         p: "Memerlukan pendampingan intensif untuk meningkatkan motivasi dan keberanian diri.",
       },
     };
-    const data = db[kategori] || db["Cukup"];
+    const data     = db[kategori] || db["Cukup"];
     const fieldMap = [
-      ["final_teknis", "t"],
+      ["final_teknis",       "t"],
       ["final_interpretasi", "i"],
-      ["final_dinamika", "d"],
-      ["final_profil", "p"],
+      ["final_dinamika",     "d"],
+      ["final_profil",       "p"],
     ];
-    fieldMap.forEach(([id, key]) => {
-      const elF = el(id);
-      if (elF) elF.value = data[key];
+    fieldMap.forEach(function(pair) {
+      const elF = el(pair[0]);
+      if (elF) elF.value = data[pair[1]];
     });
   }
 
   // --- Simpan ---
+  // Serial upload (satu per satu) - sama seperti kondisi yang berhasil 18 April
 
   async function simpanHTP() {
-  if (!document.getElementById("idPeserta") || !document.getElementById("idPeserta").value) {
-    alert("Pilih peserta terlebih dahulu!");
-    return;
+    if (!document.getElementById("idPeserta").value) {
+      alert("Pilih peserta terlebih dahulu!");
+      return;
+    }
+
+    Swal.fire({
+      title: "Menyiapkan Data & Membaca Gambar...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const tahapanGambar = ["orang", "rumah", "pohon", "gabung"];
+    const uploadResults = {};
+
+    const namaSiswa = document.getElementById("nama").value.trim().replace(/\s+/g, "_") || "Peserta";
+
+    // Upload serial satu per satu - seperti yang terbukti berhasil
+    for (const tahap of tahapanGambar) {
+      const fileInput = document.getElementById("file_" + tahap);
+      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        const base64 = await new Promise(function(resolve) {
+          const reader   = new FileReader();
+          reader.onload  = function() { resolve(reader.result); };
+          reader.onerror = function() { resolve(""); };
+          reader.readAsDataURL(fileInput.files[0]);
+        });
+
+        // Nama file pakai timestamp - format yang terbukti berhasil: rumah_1776487733063.jpg
+        const namaFile  = tahap + "_" + namaSiswa + ".jpg";
+
+        const result = await new Promise(function(resolve) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(function() { resolve({ success: false, url: "-" }); })
+            .uploadGambarSaja(base64, namaFile, "HTP");
+        });
+
+        uploadResults[tahap] = result.url || "-";
+      } else {
+        uploadResults[tahap] = "-";
+      }
+    }
+
+    Swal.fire({
+      title: "Menyimpan ke Google Sheet & Membuat PDF...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const payload = _buildPayloadHTP(uploadResults);
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        Swal.close();
+        if (res.success) {
+          Swal.fire("Berhasil", res.message || "Data berhasil disimpan.", "success").then(function() {
+            if (res.pdfUrl) {
+              const previewDiv = document.getElementById("pdfPreviewHTP");
+              if (previewDiv) previewDiv.style.display = "block";
+              const frame = document.getElementById("frameLaporanHTP");
+              if (frame) frame.src = res.pdfUrl.replace("/view?usp=drivesdk", "/preview");
+            }
+          });
+        } else {
+          Swal.fire("Gagal Menyimpan", res.message || "Terjadi kesalahan.", "error");
+        }
+      })
+      .withFailureHandler(function(err) {
+        Swal.close();
+        Swal.fire("Error Server", err.message, "error");
+      })
+      .simpanHTP(payload);
   }
 
-  Swal.fire({ title: "Menyiapkan Data & Membaca Gambar...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  function _buildPayloadHTP(uploadResults) {
+    const tahapanList = ["orang", "rumah", "pohon", "gabung"];
+    const aspekList   = ["pro", "detl", "pers", "line"];
 
-  // Fungsi helper untuk mengambil gambar dari HTML input menjadi base64 (Teks)
-  const getBase64 = async (id) => {
-    const fileInput = document.getElementById(id);
-    if (fileInput && fileInput.files && fileInput.files.length > 0) {
-      return await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(fileInput.files[0]);
-        reader.onload = () => resolve(reader.result.replace(/^data:image\/[a-z]+;base64,/, ""));
-        reader.onerror = () => resolve("");
+    const payload = {
+      id_test:              document.getElementById("id_test_htp").value,
+      id_peserta:           document.getElementById("idPeserta").value,
+      nama:                 document.getElementById("nama").value,
+      tanggal:              document.getElementById("tgl_test").value,
+      total_keseluruhan:    document.getElementById("total_keseluruhan").value,
+      kategori_keseluruhan: document.getElementById("kategori_keseluruhan").value,
+      final_teknis:         document.getElementById("final_teknis").value,
+      final_interpretasi:   document.getElementById("final_interpretasi").value,
+      final_dinamika:       document.getElementById("final_dinamika").value,
+      final_profil:         document.getElementById("final_profil").value,
+      image_orang:   uploadResults["orang"]  || "-",
+      image_rumah:   uploadResults["rumah"]  || "-",
+      image_pohon:   uploadResults["pohon"]  || "-",
+      image_gabung:  uploadResults["gabung"] || "-",
+    };
+
+    tahapanList.forEach(function(tahap) {
+      aspekList.forEach(function(aspek) {
+        const elSkor   = document.getElementById("skor_"          + tahap + "_" + aspek);
+        const elNarasi = document.getElementById("narasi_detail_" + tahap + "_" + aspek);
+        payload["skor_"          + tahap + "_" + aspek] = elSkor   ? elSkor.value   : 0;
+        payload["narasi_detail_" + tahap + "_" + aspek] = elNarasi ? elNarasi.value : "";
       });
-    }
-    return "";
-  };
 
-  const payload = {
-    id_test: document.getElementById("id_test_htp").value, 
-    id_peserta: document.getElementById("idPeserta").value,
-    nama: document.getElementById("nama").value, 
-    tanggal: document.getElementById("tgl_test").value,
-    total_keseluruhan:    document.getElementById("total_keseluruhan").value,
-    kategori_keseluruhan: document.getElementById("kategori_keseluruhan").value,
-    final_teknis:         document.getElementById("final_teknis").value,
-    final_interpretasi:   document.getElementById("final_interpretasi").value,
-    final_dinamika:       document.getElementById("final_dinamika").value,
-    final_profil:         document.getElementById("final_profil").value,
-    
-    // TANGKAP GAMBAR
-    image_orang:  await getBase64("file_orang"),
-    image_rumah:  await getBase64("file_rumah"),
-    image_pohon:  await getBase64("file_pohon"),
-    image_gabung: await getBase64("file_gabung")
-  };
-
-  const tahapanList = ["orang", "rumah", "pohon", "gabung"];
-  const aspekList = ["pro", "detl", "pers", "line"];
-
-  // TANGKAP SKOR DAN NARASI PER KOTAK SECARA OTOMATIS
-  tahapanList.forEach(tahap => {
-    aspekList.forEach(aspek => {
-      const elSkor = document.getElementById(`skor_${tahap}_${aspek}`);
-      const elNarasi = document.getElementById(`narasi_detail_${tahap}_${aspek}`);
-      payload[`skor_${tahap}_${aspek}`] = elSkor ? elSkor.value : 0;
-      // INI YANG MEMBUAT KOLOM NARASI (np, nh, nt) TERISI
-      payload[`narasi_detail_${tahap}_${aspek}`] = elNarasi ? elNarasi.value : ""; 
+      payload["total_"     + tahap] = (document.getElementById("total_score_" + tahap) || {}).value || 0;
+      payload["kategori_"  + tahap] = (document.getElementById("kategori_"    + tahap) || {}).value || "-";
+      payload["teknis_"    + tahap] = (document.getElementById("teknis_"      + tahap) || {}).value || "";
+      payload["konten_"    + tahap] = (document.getElementById("konten_"      + tahap) || {}).value || "";
+      payload["simbolis_"  + tahap] = (document.getElementById("simbolis_"    + tahap) || {}).value || "";
+      payload["observasi_" + tahap] = (document.getElementById("observasi_"   + tahap) || {}).value || "";
     });
-    
-    payload[`total_${tahap}`]     = (document.getElementById(`total_score_${tahap}`) || {}).value || 0;
-    payload[`kategori_${tahap}`]  = (document.getElementById(`kategori_${tahap}`) || {}).value || "-";
-    payload[`teknis_${tahap}`]    = (document.getElementById(`teknis_${tahap}`) || {}).value || "";
-    payload[`konten_${tahap}`]    = (document.getElementById(`konten_${tahap}`) || {}).value || "";
-    payload[`simbolis_${tahap}`]  = (document.getElementById(`simbolis_${tahap}`) || {}).value || "";
-    payload[`observasi_${tahap}`] = (document.getElementById(`observasi_${tahap}`) || {}).value || "";
-  });
 
-  Swal.fire({ 
-    title: "Menyimpan ke Google Sheet & Membuat PDF...", 
-    text: "Proses ini membutuhkan waktu beberapa detik karena mengunggah gambar. Mohon tunggu.", 
-    allowOutsideClick: false, 
-    didOpen: () => Swal.showLoading() 
-  });
-
-  google.script.run
-    .withSuccessHandler(res => {
-      Swal.close();
-      if(res.success) {
-        Swal.fire("Berhasil", res.message, "success").then(() => {
-          if (res.pdfUrl) {
-            let previewDiv = document.getElementById("pdfPreviewHTP");
-            if (!previewDiv) {
-              previewDiv = document.createElement("div");
-              previewDiv.id = "pdfPreviewHTP";
-              previewDiv.style.marginTop = "30px";
-              previewDiv.innerHTML = `<iframe id="frameLaporanHTP" style="width:100%; height:600px; border:1px solid #e2e8f0; border-radius:12px;"></iframe>`;
-              document.getElementById("konten").appendChild(previewDiv);
-            }
-            previewDiv.style.display = "block";
-            document.getElementById("frameLaporanHTP").src = res.pdfUrl.replace("/view?usp=drivesdk", "/preview");
-          }
-        });
-      } else {
-        Swal.fire("Gagal Menyimpan", res.message, "error");
-      }
-    })
-    .withFailureHandler(err => { Swal.close(); Swal.fire("Error Koneksi", err.message, "error"); })
-    .simpanHTP(payload);
-}
+    return payload;
+  }
 </script>
